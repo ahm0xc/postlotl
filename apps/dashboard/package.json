@@ -2,14 +2,12 @@
   "name": "dashboard",
   "private": true,
   "type": "module",
-  "imports": {
-    "#/*": "./src/*"
-  },
   "scripts": {
     "dev": "vite dev",
     "generate-routes": "vite build",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "@t3-oss/env-core": "^0.13.10",
