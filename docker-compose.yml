@@ -5,8 +5,24 @@ services:
       dockerfile: apps/api/Dockerfile
     image: postlotl-api
     ports:
-      - "${API_PORT:-5200}:${PORT:-5200}"
+      - "5200:5200"
+    environment:
+      PORT: 5200
     env_file:
       - path: apps/api/.env
+        required: false
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: apps/dashboard/Dockerfile
+    image: postlotl-dashboard
+    ports:
+      - "5100:5100"
+    environment:
+      PORT: 5100
+    env_file:
+      - path: apps/dashboard/.env
         required: false
     restart: unless-stopped
