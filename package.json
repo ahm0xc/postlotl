@@ -10,8 +10,7 @@
     "lint:fix": "oxlint --fix",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
-    "test": "pnpm -r test",
-    "typecheck": "pnpm -r typecheck"
+    "check-types": "pnpm -r typecheck"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
