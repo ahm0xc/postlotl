@@ -1,12 +1,8 @@
 import type { QueryClient } from "@tanstack/react-query";
-import {
-  HeadContent,
-  Outlet,
-  Scripts,
-  createRootRouteWithContext,
-} from "@tanstack/react-router";
+import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 
 import TanstackQueryProvider from "../components/query-provider";
+
 import appCss from "../styles.css?url";
 
 interface MyRouterContext {
