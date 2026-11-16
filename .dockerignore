@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+**/.DS_Store
+**/.env
+**/.env.*
+**/.dev.vars
+**/*.log
+.git
+.serena
+.idea
+.vscode
+**/Dockerfile
+**/.dockerignore

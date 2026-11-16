@@ -1,0 +1,12 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: postlotl-api
+    ports:
+      - "${API_PORT:-5200}:${PORT:-5200}"
+    env_file:
+      - path: apps/api/.env
+        required: false
+    restart: unless-stopped
