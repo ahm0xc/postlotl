@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm -r dev",
+    "dev:api": "pnpm --filter api... dev",
+    "dev:dashboard": "pnpm --filter dashboard... dev",
     "build": "pnpm -r build",
+    "build:api": "pnpm --filter api... build",
+    "build:dashboard": "pnpm --filter dashboard... build",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "fmt": "oxfmt",
