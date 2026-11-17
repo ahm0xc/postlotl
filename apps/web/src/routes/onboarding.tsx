@@ -5,7 +5,7 @@ import { Input } from "@repo/ui/components/input";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { completeOnboarding } from "~/server/onboarding";
+import { completeOnboarding, getOnboardingState } from "~/server/onboarding";
 import { getSessionState } from "~/server/session";
 
 export const Route = createFileRoute("/onboarding")({
@@ -13,11 +13,14 @@ export const Route = createFileRoute("/onboarding")({
     const state = await getSessionState();
     if (!state) throw redirect({ to: "/login" });
     if (state.onboardingCompleted) throw redirect({ to: "/" });
+    const { needsProject } = await getOnboardingState();
+    return { needsProject };
   },
   component: Onboarding,
 });
 
 function Onboarding() {
+  const { needsProject } = Route.useRouteContext();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -30,7 +33,10 @@ function Onboarding() {
 
     try {
       await completeOnboarding({
-        data: { organizationName: String(form.get("organizationName")) },
+        data: {
+          organizationName: String(form.get("organizationName")),
+          projectName: needsProject ? String(form.get("projectName")) : undefined,
+        },
       });
       await navigate({ to: "/" });
     } catch (err) {
@@ -48,6 +54,12 @@ function Onboarding() {
           <FieldLabel>Organization name</FieldLabel>
           <Input name="organizationName" required maxLength={100} />
         </Field>
+        {needsProject && (
+          <Field>
+            <FieldLabel>Project name</FieldLabel>
+            <Input name="projectName" required maxLength={100} />
+          </Field>
+        )}
         {error && (
           <Alert variant="error" role="alert">
             <AlertTitle>Could not continue</AlertTitle>

@@ -1,11 +1,5 @@
 import { Button } from "@repo/ui/components/button";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardPanel,
-  CardTitle,
-} from "@repo/ui/components/card";
+import { Card, CardDescription, CardHeader, CardPanel, CardTitle } from "@repo/ui/components/card";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { authClient } from "~/lib/auth-client";
@@ -22,7 +16,7 @@ function Home() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col justify-center gap-6 p-6">
+    <main className="mx-auto flex w-full max-w-2xl flex-col gap-6">
       <Card>
         <CardHeader>
           <CardTitle>Welcome back</CardTitle>
