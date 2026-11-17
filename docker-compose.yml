@@ -8,8 +8,9 @@ services:
       - "5200:5200"
     environment:
       PORT: 5200
+      POSTGRES_HOST: postgres
     env_file:
-      - path: apps/api/.env
+      - path: .env
         required: false
     restart: unless-stopped
 
@@ -23,12 +24,14 @@ services:
     environment:
       PORT: 5100
     env_file:
-      - path: apps/dashboard/.env
+      - path: .env
         required: false
     restart: unless-stopped
 
   postgres:
     image: postgres:18-alpine
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_DB: postlotl
       POSTGRES_USER: postlotl
