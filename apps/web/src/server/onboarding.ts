@@ -6,7 +6,7 @@ import { z } from "zod";
 import { auth } from "./auth";
 import { db } from "./db";
 import * as schema from "./db/schema";
-import { slugify } from "./slug";
+import { generateUniqueProjectSlug } from "./slug";
 
 async function userHasProject(userId: string) {
   const [row] = await db
@@ -58,7 +58,7 @@ export const completeOnboarding = createServerFn({ method: "POST" })
         await db.insert(schema.project).values({
           organizationId: organization.id,
           name: projectName,
-          slug: slugify(projectName) || "project",
+          slug: await generateUniqueProjectSlug(projectName, async () => false),
         });
       }
     } catch (error) {

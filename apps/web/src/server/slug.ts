@@ -13,13 +13,25 @@ export function slugify(value: string) {
     .replace(/-+$/g, "");
 }
 
-export async function generateUniqueSlug(name: string, isTaken: (slug: string) => Promise<boolean>) {
-  const base = slugify(name) || "org";
+export async function generateUniqueSlug(
+  name: string,
+  isTaken: (slug: string) => Promise<boolean>,
+  fallback = "org",
+) {
+  const base = slugify(name) || fallback;
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    const slug = `${base}-${randomInt(100000, 1000000)}`;
+    const digits = Array.from({ length: 8 }, () => randomInt(10)).join("");
+    const slug = `${base}-${digits}`;
     if (!(await isTaken(slug))) return slug;
   }
 
-  throw new Error("Could not generate a unique organization slug");
+  throw new Error("Could not generate a unique slug");
+}
+
+export function generateUniqueProjectSlug(
+  name: string,
+  isTaken: (slug: string) => Promise<boolean>,
+) {
+  return generateUniqueSlug(name, isTaken, "project");
 }

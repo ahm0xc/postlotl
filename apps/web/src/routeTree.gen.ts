@@ -16,7 +16,10 @@ import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as AppOrgOrgSlugRouteImport } from './routes/_app/org/$orgSlug'
+import { Route as AppProjectProjectSlugRouteImport } from './routes/_app/project/$projectSlug'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as AppProjectProjectSlugIndexRouteImport } from './routes/_app/project/$projectSlug/index'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -51,11 +54,27 @@ const ApiHealthRoute = ApiHealthRouteImport.update({
   path: '/api/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppOrgOrgSlugRoute = AppOrgOrgSlugRouteImport.update({
+  id: '/org/$orgSlug',
+  path: '/org/$orgSlug',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProjectProjectSlugRoute = AppProjectProjectSlugRouteImport.update({
+  id: '/project/$projectSlug',
+  path: '/project/$projectSlug',
+  getParentRoute: () => AppRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppProjectProjectSlugIndexRoute =
+  AppProjectProjectSlugIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AppProjectProjectSlugRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -63,7 +82,10 @@ export interface FileRoutesByFullPath {
   '/login': typeof AuthLoginRoute
   '/signup': typeof AuthSignupRoute
   '/api/health': typeof ApiHealthRoute
+  '/org/$orgSlug': typeof AppOrgOrgSlugRoute
+  '/project/$projectSlug': typeof AppProjectProjectSlugRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/project/$projectSlug/': typeof AppProjectProjectSlugIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
@@ -71,7 +93,9 @@ export interface FileRoutesByTo {
   '/login': typeof AuthLoginRoute
   '/signup': typeof AuthSignupRoute
   '/api/health': typeof ApiHealthRoute
+  '/org/$orgSlug': typeof AppOrgOrgSlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/project/$projectSlug': typeof AppProjectProjectSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -82,14 +106,33 @@ export interface FileRoutesById {
   '/_auth/signup': typeof AuthSignupRoute
   '/api/health': typeof ApiHealthRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/org/$orgSlug': typeof AppOrgOrgSlugRoute
+  '/_app/project/$projectSlug': typeof AppProjectProjectSlugRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/_app/project/$projectSlug/': typeof AppProjectProjectSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/onboarding' | '/login' | '/signup' | '/api/health' | '/api/auth/$'
+    | '/'
+    | '/onboarding'
+    | '/login'
+    | '/signup'
+    | '/api/health'
+    | '/org/$orgSlug'
+    | '/project/$projectSlug'
+    | '/api/auth/$'
+    | '/project/$projectSlug/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/onboarding' | '/login' | '/signup' | '/api/health' | '/api/auth/$'
+  to:
+    | '/'
+    | '/onboarding'
+    | '/login'
+    | '/signup'
+    | '/api/health'
+    | '/org/$orgSlug'
+    | '/api/auth/$'
+    | '/project/$projectSlug'
   id:
     | '__root__'
     | '/_app'
@@ -99,7 +142,10 @@ export interface FileRouteTypes {
     | '/_auth/signup'
     | '/api/health'
     | '/_app/'
+    | '/_app/org/$orgSlug'
+    | '/_app/project/$projectSlug'
     | '/api/auth/$'
+    | '/_app/project/$projectSlug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -161,6 +207,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/org/$orgSlug': {
+      id: '/_app/org/$orgSlug'
+      path: '/org/$orgSlug'
+      fullPath: '/org/$orgSlug'
+      preLoaderRoute: typeof AppOrgOrgSlugRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/project/$projectSlug': {
+      id: '/_app/project/$projectSlug'
+      path: '/project/$projectSlug'
+      fullPath: '/project/$projectSlug'
+      preLoaderRoute: typeof AppProjectProjectSlugRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -168,15 +228,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/project/$projectSlug/': {
+      id: '/_app/project/$projectSlug/'
+      path: '/'
+      fullPath: '/project/$projectSlug/'
+      preLoaderRoute: typeof AppProjectProjectSlugIndexRouteImport
+      parentRoute: typeof AppProjectProjectSlugRoute
+    }
   }
 }
 
+interface AppProjectProjectSlugRouteChildren {
+  AppProjectProjectSlugIndexRoute: typeof AppProjectProjectSlugIndexRoute
+}
+
+const AppProjectProjectSlugRouteChildren: AppProjectProjectSlugRouteChildren = {
+  AppProjectProjectSlugIndexRoute: AppProjectProjectSlugIndexRoute,
+}
+
+const AppProjectProjectSlugRouteWithChildren =
+  AppProjectProjectSlugRoute._addFileChildren(
+    AppProjectProjectSlugRouteChildren,
+  )
+
 interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
+  AppOrgOrgSlugRoute: typeof AppOrgOrgSlugRoute
+  AppProjectProjectSlugRoute: typeof AppProjectProjectSlugRouteWithChildren
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
+  AppOrgOrgSlugRoute: AppOrgOrgSlugRoute,
+  AppProjectProjectSlugRoute: AppProjectProjectSlugRouteWithChildren,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

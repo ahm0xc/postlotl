@@ -1,9 +1,7 @@
 import {
-  BuildingsIcon,
   ChartLineUpIcon,
   EnvelopeSimpleIcon,
   FlagIcon,
-  FolderSimpleIcon,
   GearSixIcon,
   HouseIcon,
   PlusIcon,
@@ -46,9 +44,11 @@ import {
   useSidebar,
 } from "@repo/ui/components/sidebar";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { authClient } from "~/lib/auth-client";
+import { useSwitchOrganization } from "~/lib/organization";
 import { createProject, listProjects } from "~/server/projects";
 
 import { CreateProjectDialog } from "./create-project-dialog";
@@ -78,7 +78,9 @@ export function AppSidebar() {
   const queryClient = useQueryClient();
   const { data: organizations } = authClient.useListOrganizations();
   const { data: activeOrganization } = authClient.useActiveOrganization();
-  const [selectedProjectId, setSelectedProjectId] = useState<string>();
+  const navigate = useNavigate();
+  const switchOrganization = useSwitchOrganization();
+  const { projectSlug } = useParams({ strict: false });
   const [createOpen, setCreateOpen] = useState(false);
   const organizationId = activeOrganization?.id;
 
@@ -88,20 +90,18 @@ export function AppSidebar() {
     enabled: organizationId !== undefined,
   });
 
-  const currentProject =
-    projects.find((project) => project.id === selectedProjectId) ?? projects[0];
+  const currentProject = projects.find((project) => project.slug === projectSlug) ?? projects[0];
 
-  async function switchOrganization(id: string) {
-    await authClient.organization.setActive({ organizationId: id });
-    setSelectedProjectId(undefined);
+  function openProject(slug: string) {
+    return navigate({ to: "/project/$projectSlug", params: { projectSlug: slug } });
   }
 
   async function handleCreateProject(name: string) {
     if (!organizationId) throw new Error("No active organization");
     const project = await createProject({ data: { organizationId, name } });
     await queryClient.invalidateQueries({ queryKey: ["projects", organizationId] });
-    setSelectedProjectId(project.id);
     setCreateOpen(false);
+    await openProject(project.slug);
   }
 
   return (
@@ -132,20 +132,25 @@ export function AppSidebar() {
               >
                 <MenuSub>
                   <MenuSubTrigger>
-                    <FolderSimpleIcon aria-hidden="true" />
-                    Switch project
+                    <Avatar aria-hidden="true" shape="square" size="xs">
+                      <AvatarFallback>{initialsOf(currentProject?.name ?? "P")}</AvatarFallback>
+                    </Avatar>
+                    {currentProject?.name ?? "No project"}
                   </MenuSubTrigger>
                   <MenuSubPopup>
                     <MenuRadioGroup
-                      value={currentProject?.id}
-                      onValueChange={(value) => setSelectedProjectId(String(value))}
+                      value={currentProject?.slug}
+                      onValueChange={(value) => openProject(String(value))}
                     >
                       {projects.map((project) => (
                         <MenuRadioItem
-                          disabled={project.id === currentProject?.id}
+                          disabled={project.slug === currentProject?.slug}
                           key={project.id}
-                          value={project.id}
+                          value={project.slug}
                         >
+                          <Avatar aria-hidden="true" shape="square" size="xs">
+                            <AvatarFallback>{initialsOf(project.name)}</AvatarFallback>
+                          </Avatar>
                           {project.name}
                         </MenuRadioItem>
                       ))}
@@ -170,8 +175,12 @@ export function AppSidebar() {
                   <MenuGroupLabel>Organizations</MenuGroupLabel>
                   <MenuSub>
                     <MenuSubTrigger>
-                      <BuildingsIcon aria-hidden="true" />
-                      Switch organization
+                      <Avatar aria-hidden="true" shape="square" size="xs">
+                        <AvatarFallback>
+                          {initialsOf(activeOrganization?.name ?? "O")}
+                        </AvatarFallback>
+                      </Avatar>
+                      {activeOrganization?.name ?? "No organization"}
                     </MenuSubTrigger>
                     <MenuSubPopup>
                       <MenuRadioGroup
@@ -180,6 +189,9 @@ export function AppSidebar() {
                       >
                         {(organizations ?? []).map((organization) => (
                           <MenuRadioItem key={organization.id} value={organization.id}>
+                            <Avatar aria-hidden="true" shape="square" size="xs">
+                              <AvatarFallback>{initialsOf(organization.name)}</AvatarFallback>
+                            </Avatar>
                             {organization.name}
                           </MenuRadioItem>
                         ))}
