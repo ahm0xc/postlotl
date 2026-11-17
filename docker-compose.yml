@@ -10,7 +10,7 @@ services:
       PORT: 5200
       POSTGRES_HOST: postgres
     env_file:
-      - path: .env
+      - path: apps/api/.env
         required: false
     restart: unless-stopped
 
@@ -24,7 +24,7 @@ services:
     environment:
       PORT: 5100
     env_file:
-      - path: .env
+      - path: apps/dashboard/.env
         required: false
     restart: unless-stopped
 
@@ -32,10 +32,12 @@ services:
     image: postgres:18-alpine
     ports:
       - "5432:5432"
+    env_file:
+      - path: apps/api/.env
+        required: false
     environment:
       POSTGRES_DB: postlotl
       POSTGRES_USER: postlotl
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     volumes:
       - postgres-data:/var/lib/postgresql
     healthcheck:

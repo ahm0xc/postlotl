@@ -4,7 +4,7 @@ import { z } from "zod";
 
 if (process.env.NODE_ENV !== "production") {
   config({
-    path: fileURLToPath(new URL("../../../.env", import.meta.url)),
+    path: fileURLToPath(new URL("../.env", import.meta.url)),
     quiet: true,
   });
 }
