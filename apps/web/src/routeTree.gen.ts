@@ -20,6 +20,12 @@ import { Route as AppOrgOrgSlugRouteImport } from './routes/_app/org/$orgSlug'
 import { Route as AppProjectProjectSlugRouteImport } from './routes/_app/project/$projectSlug'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppProjectProjectSlugIndexRouteImport } from './routes/_app/project/$projectSlug/index'
+import { Route as AppProjectProjectSlugActivityRouteImport } from './routes/_app/project/$projectSlug/activity'
+import { Route as AppProjectProjectSlugAiObservabilityRouteImport } from './routes/_app/project/$projectSlug/ai-observability'
+import { Route as AppProjectProjectSlugFeatureFlagsRouteImport } from './routes/_app/project/$projectSlug/feature-flags'
+import { Route as AppProjectProjectSlugPeopleRouteImport } from './routes/_app/project/$projectSlug/people'
+import { Route as AppProjectProjectSlugReplayVisionRouteImport } from './routes/_app/project/$projectSlug/replay-vision'
+import { Route as AppProjectProjectSlugWebAnalyticsRouteImport } from './routes/_app/project/$projectSlug/web-analytics'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -75,6 +81,42 @@ const AppProjectProjectSlugIndexRoute =
     path: '/',
     getParentRoute: () => AppProjectProjectSlugRoute,
   } as any)
+const AppProjectProjectSlugActivityRoute =
+  AppProjectProjectSlugActivityRouteImport.update({
+    id: '/activity',
+    path: '/activity',
+    getParentRoute: () => AppProjectProjectSlugRoute,
+  } as any)
+const AppProjectProjectSlugAiObservabilityRoute =
+  AppProjectProjectSlugAiObservabilityRouteImport.update({
+    id: '/ai-observability',
+    path: '/ai-observability',
+    getParentRoute: () => AppProjectProjectSlugRoute,
+  } as any)
+const AppProjectProjectSlugFeatureFlagsRoute =
+  AppProjectProjectSlugFeatureFlagsRouteImport.update({
+    id: '/feature-flags',
+    path: '/feature-flags',
+    getParentRoute: () => AppProjectProjectSlugRoute,
+  } as any)
+const AppProjectProjectSlugPeopleRoute =
+  AppProjectProjectSlugPeopleRouteImport.update({
+    id: '/people',
+    path: '/people',
+    getParentRoute: () => AppProjectProjectSlugRoute,
+  } as any)
+const AppProjectProjectSlugReplayVisionRoute =
+  AppProjectProjectSlugReplayVisionRouteImport.update({
+    id: '/replay-vision',
+    path: '/replay-vision',
+    getParentRoute: () => AppProjectProjectSlugRoute,
+  } as any)
+const AppProjectProjectSlugWebAnalyticsRoute =
+  AppProjectProjectSlugWebAnalyticsRouteImport.update({
+    id: '/web-analytics',
+    path: '/web-analytics',
+    getParentRoute: () => AppProjectProjectSlugRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -85,6 +127,12 @@ export interface FileRoutesByFullPath {
   '/org/$orgSlug': typeof AppOrgOrgSlugRoute
   '/project/$projectSlug': typeof AppProjectProjectSlugRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/project/$projectSlug/activity': typeof AppProjectProjectSlugActivityRoute
+  '/project/$projectSlug/ai-observability': typeof AppProjectProjectSlugAiObservabilityRoute
+  '/project/$projectSlug/feature-flags': typeof AppProjectProjectSlugFeatureFlagsRoute
+  '/project/$projectSlug/people': typeof AppProjectProjectSlugPeopleRoute
+  '/project/$projectSlug/replay-vision': typeof AppProjectProjectSlugReplayVisionRoute
+  '/project/$projectSlug/web-analytics': typeof AppProjectProjectSlugWebAnalyticsRoute
   '/project/$projectSlug/': typeof AppProjectProjectSlugIndexRoute
 }
 export interface FileRoutesByTo {
@@ -95,6 +143,12 @@ export interface FileRoutesByTo {
   '/api/health': typeof ApiHealthRoute
   '/org/$orgSlug': typeof AppOrgOrgSlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/project/$projectSlug/activity': typeof AppProjectProjectSlugActivityRoute
+  '/project/$projectSlug/ai-observability': typeof AppProjectProjectSlugAiObservabilityRoute
+  '/project/$projectSlug/feature-flags': typeof AppProjectProjectSlugFeatureFlagsRoute
+  '/project/$projectSlug/people': typeof AppProjectProjectSlugPeopleRoute
+  '/project/$projectSlug/replay-vision': typeof AppProjectProjectSlugReplayVisionRoute
+  '/project/$projectSlug/web-analytics': typeof AppProjectProjectSlugWebAnalyticsRoute
   '/project/$projectSlug': typeof AppProjectProjectSlugIndexRoute
 }
 export interface FileRoutesById {
@@ -109,6 +163,12 @@ export interface FileRoutesById {
   '/_app/org/$orgSlug': typeof AppOrgOrgSlugRoute
   '/_app/project/$projectSlug': typeof AppProjectProjectSlugRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/_app/project/$projectSlug/activity': typeof AppProjectProjectSlugActivityRoute
+  '/_app/project/$projectSlug/ai-observability': typeof AppProjectProjectSlugAiObservabilityRoute
+  '/_app/project/$projectSlug/feature-flags': typeof AppProjectProjectSlugFeatureFlagsRoute
+  '/_app/project/$projectSlug/people': typeof AppProjectProjectSlugPeopleRoute
+  '/_app/project/$projectSlug/replay-vision': typeof AppProjectProjectSlugReplayVisionRoute
+  '/_app/project/$projectSlug/web-analytics': typeof AppProjectProjectSlugWebAnalyticsRoute
   '/_app/project/$projectSlug/': typeof AppProjectProjectSlugIndexRoute
 }
 export interface FileRouteTypes {
@@ -122,6 +182,12 @@ export interface FileRouteTypes {
     | '/org/$orgSlug'
     | '/project/$projectSlug'
     | '/api/auth/$'
+    | '/project/$projectSlug/activity'
+    | '/project/$projectSlug/ai-observability'
+    | '/project/$projectSlug/feature-flags'
+    | '/project/$projectSlug/people'
+    | '/project/$projectSlug/replay-vision'
+    | '/project/$projectSlug/web-analytics'
     | '/project/$projectSlug/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -132,6 +198,12 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/org/$orgSlug'
     | '/api/auth/$'
+    | '/project/$projectSlug/activity'
+    | '/project/$projectSlug/ai-observability'
+    | '/project/$projectSlug/feature-flags'
+    | '/project/$projectSlug/people'
+    | '/project/$projectSlug/replay-vision'
+    | '/project/$projectSlug/web-analytics'
     | '/project/$projectSlug'
   id:
     | '__root__'
@@ -145,6 +217,12 @@ export interface FileRouteTypes {
     | '/_app/org/$orgSlug'
     | '/_app/project/$projectSlug'
     | '/api/auth/$'
+    | '/_app/project/$projectSlug/activity'
+    | '/_app/project/$projectSlug/ai-observability'
+    | '/_app/project/$projectSlug/feature-flags'
+    | '/_app/project/$projectSlug/people'
+    | '/_app/project/$projectSlug/replay-vision'
+    | '/_app/project/$projectSlug/web-analytics'
     | '/_app/project/$projectSlug/'
   fileRoutesById: FileRoutesById
 }
@@ -235,14 +313,72 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProjectProjectSlugIndexRouteImport
       parentRoute: typeof AppProjectProjectSlugRoute
     }
+    '/_app/project/$projectSlug/activity': {
+      id: '/_app/project/$projectSlug/activity'
+      path: '/activity'
+      fullPath: '/project/$projectSlug/activity'
+      preLoaderRoute: typeof AppProjectProjectSlugActivityRouteImport
+      parentRoute: typeof AppProjectProjectSlugRoute
+    }
+    '/_app/project/$projectSlug/ai-observability': {
+      id: '/_app/project/$projectSlug/ai-observability'
+      path: '/ai-observability'
+      fullPath: '/project/$projectSlug/ai-observability'
+      preLoaderRoute: typeof AppProjectProjectSlugAiObservabilityRouteImport
+      parentRoute: typeof AppProjectProjectSlugRoute
+    }
+    '/_app/project/$projectSlug/feature-flags': {
+      id: '/_app/project/$projectSlug/feature-flags'
+      path: '/feature-flags'
+      fullPath: '/project/$projectSlug/feature-flags'
+      preLoaderRoute: typeof AppProjectProjectSlugFeatureFlagsRouteImport
+      parentRoute: typeof AppProjectProjectSlugRoute
+    }
+    '/_app/project/$projectSlug/people': {
+      id: '/_app/project/$projectSlug/people'
+      path: '/people'
+      fullPath: '/project/$projectSlug/people'
+      preLoaderRoute: typeof AppProjectProjectSlugPeopleRouteImport
+      parentRoute: typeof AppProjectProjectSlugRoute
+    }
+    '/_app/project/$projectSlug/replay-vision': {
+      id: '/_app/project/$projectSlug/replay-vision'
+      path: '/replay-vision'
+      fullPath: '/project/$projectSlug/replay-vision'
+      preLoaderRoute: typeof AppProjectProjectSlugReplayVisionRouteImport
+      parentRoute: typeof AppProjectProjectSlugRoute
+    }
+    '/_app/project/$projectSlug/web-analytics': {
+      id: '/_app/project/$projectSlug/web-analytics'
+      path: '/web-analytics'
+      fullPath: '/project/$projectSlug/web-analytics'
+      preLoaderRoute: typeof AppProjectProjectSlugWebAnalyticsRouteImport
+      parentRoute: typeof AppProjectProjectSlugRoute
+    }
   }
 }
 
 interface AppProjectProjectSlugRouteChildren {
+  AppProjectProjectSlugActivityRoute: typeof AppProjectProjectSlugActivityRoute
+  AppProjectProjectSlugAiObservabilityRoute: typeof AppProjectProjectSlugAiObservabilityRoute
+  AppProjectProjectSlugFeatureFlagsRoute: typeof AppProjectProjectSlugFeatureFlagsRoute
+  AppProjectProjectSlugPeopleRoute: typeof AppProjectProjectSlugPeopleRoute
+  AppProjectProjectSlugReplayVisionRoute: typeof AppProjectProjectSlugReplayVisionRoute
+  AppProjectProjectSlugWebAnalyticsRoute: typeof AppProjectProjectSlugWebAnalyticsRoute
   AppProjectProjectSlugIndexRoute: typeof AppProjectProjectSlugIndexRoute
 }
 
 const AppProjectProjectSlugRouteChildren: AppProjectProjectSlugRouteChildren = {
+  AppProjectProjectSlugActivityRoute: AppProjectProjectSlugActivityRoute,
+  AppProjectProjectSlugAiObservabilityRoute:
+    AppProjectProjectSlugAiObservabilityRoute,
+  AppProjectProjectSlugFeatureFlagsRoute:
+    AppProjectProjectSlugFeatureFlagsRoute,
+  AppProjectProjectSlugPeopleRoute: AppProjectProjectSlugPeopleRoute,
+  AppProjectProjectSlugReplayVisionRoute:
+    AppProjectProjectSlugReplayVisionRoute,
+  AppProjectProjectSlugWebAnalyticsRoute:
+    AppProjectProjectSlugWebAnalyticsRoute,
   AppProjectProjectSlugIndexRoute: AppProjectProjectSlugIndexRoute,
 }
 

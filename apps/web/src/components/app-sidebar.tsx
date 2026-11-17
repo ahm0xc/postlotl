@@ -34,7 +34,6 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuButtonText,
@@ -44,7 +43,7 @@ import {
   useSidebar,
 } from "@repo/ui/components/sidebar";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useParams } from "@tanstack/react-router";
+import { Link, useMatchRoute, useNavigate, useParams } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { authClient } from "~/lib/auth-client";
@@ -54,14 +53,14 @@ import { createProject, listProjects } from "~/server/projects";
 import { CreateProjectDialog } from "./create-project-dialog";
 
 const navigationItems = [
-  { label: "Home", icon: HouseIcon },
-  { label: "Activity", icon: PulseIcon },
-  { label: "People", icon: UsersIcon },
-  { label: "Feature flags", icon: FlagIcon },
-  { label: "Web analytics", icon: ChartLineUpIcon },
-  { label: "AI observability", icon: RobotIcon },
-  { label: "Replay vision", icon: VideoCameraIcon },
-];
+  { label: "Home", icon: HouseIcon, to: "/project/$projectSlug" },
+  { label: "Activity", icon: PulseIcon, to: "/project/$projectSlug/activity" },
+  { label: "People", icon: UsersIcon, to: "/project/$projectSlug/people" },
+  { label: "Feature flags", icon: FlagIcon, to: "/project/$projectSlug/feature-flags" },
+  { label: "Web analytics", icon: ChartLineUpIcon, to: "/project/$projectSlug/web-analytics" },
+  { label: "AI observability", icon: RobotIcon, to: "/project/$projectSlug/ai-observability" },
+  { label: "Replay vision", icon: VideoCameraIcon, to: "/project/$projectSlug/replay-vision" },
+] as const;
 
 function initialsOf(name: string) {
   return name
@@ -79,8 +78,9 @@ export function AppSidebar() {
   const { data: organizations } = authClient.useListOrganizations();
   const { data: activeOrganization } = authClient.useActiveOrganization();
   const navigate = useNavigate();
+  const matchRoute = useMatchRoute();
   const switchOrganization = useSwitchOrganization();
-  const { projectSlug } = useParams({ strict: false });
+  const { projectSlug } = useParams({ from: "/_app/project/$projectSlug" });
   const [createOpen, setCreateOpen] = useState(false);
   const organizationId = activeOrganization?.id;
 
@@ -105,7 +105,7 @@ export function AppSidebar() {
   }
 
   return (
-    <DashboardShellSidebar>
+    <DashboardShellSidebar collapsible="none">
       <DashboardShellSidebarHeader className="h-auto py-2">
         <SidebarMenu>
           <SidebarMenuItem>
@@ -214,12 +214,16 @@ export function AppSidebar() {
       </DashboardShellSidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map((item, index) => (
+              {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton active={index === 0}>
+                  <SidebarMenuButton
+                    active={
+                      matchRoute({ to: item.to, params: { projectSlug }, fuzzy: false }) !== false
+                    }
+                    render={<Link params={{ projectSlug }} to={item.to} />}
+                  >
                     <item.icon aria-hidden="true" />
                     {item.label}
                   </SidebarMenuButton>

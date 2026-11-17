@@ -1,9 +1,7 @@
 import {
   DashboardShell,
-  DashboardShellHeader,
   DashboardShellInset,
   DashboardShellMain,
-  DashboardShellSidebarTrigger,
 } from "@repo/ui/components/dashboard-shell";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 
@@ -18,9 +16,6 @@ function ProjectLayout() {
     <DashboardShell>
       <AppSidebar />
       <DashboardShellInset>
-        <DashboardShellHeader>
-          <DashboardShellSidebarTrigger />
-        </DashboardShellHeader>
         <DashboardShellMain>
           <Outlet />
         </DashboardShellMain>
