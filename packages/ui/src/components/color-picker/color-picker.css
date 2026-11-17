@@ -1,0 +1,215 @@
+@layer theme, base, components, ui, utilities;
+
+@layer ui {
+  .sp-color-picker-trigger {
+    text-transform: uppercase;
+  }
+
+  /* A trigger that shows the value is a field: the text of the field scale at
+   * the body weight, from the field's inline padding, with the swatch 8 px
+   * before the value (design-rework.css, beside the field states of the
+   * trigger). */
+  .sp-color-picker-trigger-with-value {
+    min-width: 8rem;
+    justify-content: flex-start;
+  }
+
+  /* The swatch is a fixed share (5/8) of the trigger's height, so every size keeps
+   * the same proportion and inset. The heights are the control scale of the
+   * Button, which sets `data-size` on the trigger: a text size, or its icon size
+   * when only the swatch shows. */
+  .sp-color-picker-trigger {
+    --sp-color-picker-trigger-height: var(--sp-rw-control-md);
+  }
+
+  .sp-color-picker-trigger:is([data-size="sm"], [data-size="icon-sm"]) {
+    --sp-color-picker-trigger-height: var(--sp-rw-control-sm);
+  }
+
+  .sp-color-picker-trigger:is([data-size="lg"], [data-size="icon-lg"]) {
+    --sp-color-picker-trigger-height: var(--sp-rw-control-lg);
+  }
+
+  .sp-color-picker-trigger:is([data-size="xl"], [data-size="icon-xl"]) {
+    --sp-color-picker-trigger-height: var(--sp-rw-control-xl);
+  }
+
+  .sp-color-picker-trigger-swatch {
+    width: calc(var(--sp-color-picker-trigger-height) * 0.625);
+    height: calc(var(--sp-color-picker-trigger-height) * 0.625);
+    flex: none;
+    border: var(--sp-rw-border-default) solid var(--sp-rw-border-translucent);
+    border-radius: max(0px, calc(var(--sp-rw-radius-control) - 4px));
+  }
+
+  /* One compact width at every size (250 px): the saturation area, the hue row,
+   * the hex row and the three channel fields fit it without wrapping, so a
+   * larger control size only makes the fields taller. */
+  .sp-color-picker-popover {
+    z-index: 50;
+    width: 15.625rem;
+    max-width: calc(100vw - 1.5rem);
+    outline: none;
+    transform-origin: var(--trigger-anchor-point);
+  }
+
+  /* The popover opens and closes with the motion of every floating panel
+   * (motion.css), which runs as keyframes for React Aria's popovers. */
+
+  /* The popover's 12 px lie in its dialog, which scrolls when the page leaves
+   * the popover less room than the panel (design-rework.css). */
+  .sp-color-picker-dialog {
+    display: grid;
+    gap: var(--sp-rw-space-3);
+    padding: var(--sp-rw-space-3);
+    outline: none;
+  }
+
+  /* The colour area is 144 px high at the default sm, as lg had before the
+   * control ladder moved to 4 px steps, 160 px at md, as xl had, and 176 and
+   * 192 px at lg and xl (Lukas, 30 October 2026). */
+  .sp-color-picker-area-frame {
+    width: 100%;
+    height: 9rem;
+    overflow: hidden;
+    border: var(--sp-rw-border-default) solid var(--sp-rw-border-translucent);
+    border-radius: var(--sp-rw-radius-control);
+    background-clip: padding-box;
+  }
+
+  .sp-color-picker-popover[data-size="md"] .sp-color-picker-area-frame {
+    height: 10rem;
+  }
+
+  .sp-color-picker-popover[data-size="lg"] .sp-color-picker-area-frame {
+    height: 11rem;
+  }
+
+  .sp-color-picker-popover[data-size="xl"] .sp-color-picker-area-frame {
+    height: 12rem;
+  }
+
+  .sp-color-picker-area {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+  }
+
+  .sp-color-picker-area-thumb,
+  .sp-color-picker-hue-thumb {
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid white;
+    border-radius: 999px;
+    background: var(--color, transparent);
+    box-shadow: 0 0 0 1px rgb(0 0 0 / 24%);
+    outline: none;
+    transform: translate(-50%, -50%);
+  }
+
+  /* React Aria places a slider thumb along its track only (`left`, plus the
+   * centring transform above). The cross axis is left to the consumer, so without
+   * this the thumb hangs from the track's top edge. Half the track height puts
+   * its centre on the track's centre line. */
+  .sp-color-picker-hue-thumb {
+    top: 50%;
+  }
+
+  /* A thumb's keyboard focus is a ring in the focus colour of every focus
+   * ring (--sp-rw-border-focus; it drew the semantic focus colour, Tailwind's
+   * blue-500, 4 November 2026). */
+  .sp-color-picker-area-thumb[data-focus-visible],
+  .sp-color-picker-hue-thumb[data-focus-visible] {
+    box-shadow:
+      0 0 0 1px rgb(0 0 0 / 24%),
+      0 0 0 3px var(--sp-rw-border-focus);
+  }
+
+  .sp-color-picker-hue-row {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-rw-space-3);
+  }
+
+  .sp-color-picker-current-swatch {
+    width: 1.75rem;
+    height: 1.75rem;
+    flex: none;
+    border: var(--sp-rw-border-default) solid var(--sp-rw-border-translucent);
+    border-radius: 999px;
+  }
+
+  .sp-color-picker-hue {
+    flex: 1;
+    cursor: pointer;
+    touch-action: none;
+  }
+
+  .sp-color-picker-hue-track {
+    position: relative;
+    height: 0.875rem;
+    border-radius: 999px;
+    background: linear-gradient(
+      to right,
+      #f00,
+      #ff0,
+      #0f0,
+      #0ff,
+      #00f,
+      #f0f,
+      #f00
+    );
+  }
+
+  /* A right-to-left page: the dir attribute is named beside :dir(rtl), which a
+   * build for older browsers turns into a list of right-to-left languages, as
+   * Tailwind's rtl variant does. */
+  :is(:dir(rtl), [dir="rtl"], [dir="rtl"] *) .sp-color-picker-hue-track {
+    background: linear-gradient(
+      to left,
+      #f00,
+      #ff0,
+      #0f0,
+      #0ff,
+      #00f,
+      #f0f,
+      #f00
+    );
+  }
+
+  .sp-color-picker-hex-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--sp-rw-space-2);
+  }
+
+  .sp-color-picker-hex-input,
+  .sp-color-picker-channel-input {
+    font-family: var(--sp-semantic-font-family-mono);
+    font-size: var(--sp-rw-font-12);
+  }
+
+  .sp-color-picker-hex-input input {
+    text-transform: uppercase;
+  }
+
+  .sp-color-picker-channels {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-rw-space-2);
+  }
+
+  .sp-color-picker-channel {
+    display: grid;
+    gap: var(--sp-rw-space-1);
+    color: var(--sp-rw-fg-tertiary);
+    font-size: var(--sp-rw-font-12);
+    font-weight: var(--sp-rw-font-weight-label);
+    text-align: center;
+  }
+
+  .sp-color-picker-channel-input input {
+    text-align: center;
+  }
+}

@@ -1,0 +1,151 @@
+@layer theme, base, components, ui, utilities;
+
+@layer ui {
+  .sp-menu-icon-morph-root {
+    display: inline-flex;
+  }
+
+  /* At rest the bars are the List glyph that a Button of the same size shows,
+   * Phosphor's three lines in the Regular weight: each three quarters of the
+   * glyph long, a quarter of it apart, with Phosphor's 16-unit stroke in its
+   * 256-unit box. The glyph is the Button's own, the glyph ladder's (I3), which
+   * gives every size of the morph 20 px, so the bars are 15 px long and 5 px
+   * apart, whole pixels, and Phosphor's stroke is 1.25 px. A bar and the step
+   * from one bar to the next keep whole device pixels, so the browser snaps all
+   * three bars to the same rows and paints them equally thick; at a fractional
+   * step the middle bar came out thicker or thinner than the others (Lukas,
+   * 7 October 2026). The stroke is the whole device pixels at or below
+   * Phosphor's, 1 px on 1x, 2x and 3x screens: the glyph's softened edges paint
+   * about two device pixels of ink on a 2x screen, as much as a 1 px bar, where
+   * the 1.5 px above it read half again as heavy. The open state moves the
+   * outer bars by the step, so they cross on the middle bar. They drew 24 to
+   * 27.5 px bars with a 2 px stroke, wider and heavier than the glyph of every
+   * other Button (Lukas, 3 November 2026). */
+  .sp-menu-icon-morph-root .sp-menu-icon-bars {
+    --sp-menu-icon-glyph: var(--sp-rw-button-icon, var(--sp-rw-space-5));
+    --sp-menu-icon-device-pixel: 1px;
+    --sp-menu-icon-width: calc(var(--sp-menu-icon-glyph) * 0.75);
+    --sp-menu-icon-pitch: calc(var(--sp-menu-icon-glyph) / 4);
+    --sp-menu-icon-bar-height: calc(var(--sp-menu-icon-glyph) / 16);
+    --sp-menu-icon-pos-y-bar-one: 0px;
+    --sp-menu-icon-pos-y-bar-three: 0px;
+    --sp-menu-icon-scale-bar: 1;
+    --sp-menu-icon-rotate-bar-one: 0deg;
+    --sp-menu-icon-rotate-bar-three: 0deg;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: calc(var(--sp-menu-icon-pitch) - var(--sp-menu-icon-bar-height));
+  }
+
+  @media (-webkit-device-pixel-ratio >= 2), (resolution >= 2x) {
+    .sp-menu-icon-morph-root .sp-menu-icon-bars {
+      --sp-menu-icon-device-pixel: 0.5px;
+    }
+  }
+
+  @media (-webkit-device-pixel-ratio >= 3), (resolution >= 3x) {
+    .sp-menu-icon-morph-root .sp-menu-icon-bars {
+      --sp-menu-icon-device-pixel: calc(1px / 3);
+    }
+  }
+
+  @supports (top: round(1.5px, 1px)) {
+    .sp-menu-icon-morph-root .sp-menu-icon-bars {
+      --sp-menu-icon-width: round(calc(var(--sp-menu-icon-glyph) * 0.75), 1px);
+      --sp-menu-icon-pitch: round(calc(var(--sp-menu-icon-glyph) / 4), 1px);
+      --sp-menu-icon-bar-height: round(
+        down,
+        calc(var(--sp-menu-icon-glyph) / 16),
+        var(--sp-menu-icon-device-pixel)
+      );
+    }
+  }
+
+  .sp-menu-icon-morph-root .sp-menu-icon-bar {
+    display: block;
+    height: var(--sp-menu-icon-bar-height);
+    width: var(--sp-menu-icon-width);
+    border-radius: var(--radius-4xl);
+    background-color: currentColor;
+  }
+
+  /* The bars move on the navigation easing, the curve of the navigation
+   * motion (M1), by transforms alone, so the browser draws every frame between
+   * whole pixels and they glide: the outer bars by translate and rotate, the
+   * middle one by scale. Opening, the middle bar shrinks away while the outer
+   * bars slide onto it, and they start to turn half a micro step after they
+   * start to slide, so they turn into the X as they arrive, never resting on
+   * the middle bar as one thick bar first. Closing runs the same way back: the
+   * outer bars turn back first, slide apart half a micro step later, and the
+   * middle bar grows back as they leave (Lukas, 3 November 2026: the morph
+   * must be fluid). */
+  .sp-menu-icon-morph-root .sp-menu-icon-bar-one {
+    translate: 0 var(--sp-menu-icon-pos-y-bar-one);
+    rotate: var(--sp-menu-icon-rotate-bar-one);
+  }
+
+  .sp-menu-icon-morph-root .sp-menu-icon-bar-two {
+    scale: var(--sp-menu-icon-scale-bar) 1;
+    transition: scale var(--motion-duration-fast) var(--motion-ease-navigation)
+      var(--motion-duration-micro);
+  }
+
+  .sp-menu-icon-morph-root .sp-menu-icon-bar-three {
+    translate: 0 calc(var(--sp-menu-icon-pos-y-bar-three) * -1);
+    rotate: var(--sp-menu-icon-rotate-bar-three);
+  }
+
+  .sp-menu-icon-morph-root .sp-menu-icon-bar-one,
+  .sp-menu-icon-morph-root .sp-menu-icon-bar-three {
+    transition:
+      translate var(--motion-duration-base) var(--motion-ease-navigation)
+        calc(var(--motion-duration-micro) / 2),
+      rotate var(--motion-duration-base) var(--motion-ease-navigation);
+  }
+
+  .sp-menu-icon-morph-root
+    .sp-menu-icon-morph[data-state="open"]
+    .sp-menu-icon-bars {
+    --sp-menu-icon-pos-y-bar-one: var(--sp-menu-icon-pitch);
+    --sp-menu-icon-pos-y-bar-three: var(--sp-menu-icon-pitch);
+    --sp-menu-icon-scale-bar: 0;
+    --sp-menu-icon-rotate-bar-one: 45deg;
+    --sp-menu-icon-rotate-bar-three: -45deg;
+  }
+
+  .sp-menu-icon-morph-root
+    .sp-menu-icon-morph[data-state="open"]
+    .sp-menu-icon-bar-two {
+    transition: scale var(--motion-duration-fast) var(--motion-ease-navigation);
+  }
+
+  .sp-menu-icon-morph-root
+    .sp-menu-icon-morph[data-state="open"]
+    .sp-menu-icon-bar-one,
+  .sp-menu-icon-morph-root
+    .sp-menu-icon-morph[data-state="open"]
+    .sp-menu-icon-bar-three {
+    transition:
+      translate var(--motion-duration-base) var(--motion-ease-navigation),
+      rotate var(--motion-duration-base) var(--motion-ease-navigation)
+        calc(var(--motion-duration-micro) / 2);
+  }
+
+  /* The open-state transitions are more specific, so each switch uses !important. */
+  html[data-motion-reduce="true"] .sp-menu-icon-morph-root .sp-menu-icon-bar,
+  :where([data-sp-motion="reduced"])
+    .sp-menu-icon-morph-root
+    .sp-menu-icon-bar {
+    transition-duration: 0ms !important;
+    transition-delay: 0ms !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sp-menu-icon-morph-root .sp-menu-icon-bar {
+      transition-duration: 0ms !important;
+      transition-delay: 0ms !important;
+    }
+  }
+}

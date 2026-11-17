@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { Alert, AlertDescription, AlertTitle } from "@repo/ui/components/alert";
+import { Button } from "@repo/ui/components/button";
+import { Field, FieldLabel } from "@repo/ui/components/field";
+import { Input } from "@repo/ui/components/input";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 
-import { getSessionState } from "~/server/session";
 import { completeOnboarding } from "~/server/onboarding";
+import { getSessionState } from "~/server/session";
 
 export const Route = createFileRoute("/onboarding")({
   beforeLoad: async () => {
@@ -25,7 +29,9 @@ function Onboarding() {
     setError(null);
 
     try {
-      await completeOnboarding({ data: { organizationName: String(form.get("organizationName")) } });
+      await completeOnboarding({
+        data: { organizationName: String(form.get("organizationName")) },
+      });
       await navigate({ to: "/" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not complete onboarding");
@@ -35,13 +41,23 @@ function Onboarding() {
   }
 
   return (
-    <form onSubmit={onSubmit}>
-      <h1>Create your organization</h1>
-      <input name="organizationName" placeholder="Organization name" required maxLength={100} />
-      <button type="submit" disabled={pending}>
-        Continue
-      </button>
-      {error && <p role="alert">{error}</p>}
-    </form>
+    <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center gap-6 p-6">
+      <h1 className="text-2xl font-semibold">Create your organization</h1>
+      <form className="grid gap-4" onSubmit={onSubmit}>
+        <Field>
+          <FieldLabel>Organization name</FieldLabel>
+          <Input name="organizationName" required maxLength={100} />
+        </Field>
+        {error && (
+          <Alert variant="error" role="alert">
+            <AlertTitle>Could not continue</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        <Button type="submit" width="full" loading={pending}>
+          Continue
+        </Button>
+      </form>
+    </main>
   );
 }

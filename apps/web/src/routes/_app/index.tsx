@@ -1,3 +1,11 @@
+import { Button } from "@repo/ui/components/button";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardPanel,
+  CardTitle,
+} from "@repo/ui/components/card";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { authClient } from "~/lib/auth-client";
@@ -14,11 +22,18 @@ function Home() {
   }
 
   return (
-    <div>
-      <p>Signed in as {user.email}</p>
-      <button type="button" onClick={signOut}>
-        Sign out
-      </button>
-    </div>
+    <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col justify-center gap-6 p-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Welcome back</CardTitle>
+          <CardDescription>Signed in as {user.email}</CardDescription>
+        </CardHeader>
+        <CardPanel>
+          <Button variant="outline" onClick={signOut}>
+            Sign out
+          </Button>
+        </CardPanel>
+      </Card>
+    </main>
   );
 }

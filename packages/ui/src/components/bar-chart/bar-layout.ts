@@ -1,0 +1,766 @@
+import type { ScaleBand, ScaleLinear } from "d3-scale";
+
+import {
+  CHART_LABEL_COLUMN_GAP,
+  CHART_LABEL_HEIGHT,
+} from "../chart/chart-cartesian";
+import { chartValue, chartXKey } from "../chart/chart-data";
+import { nearestIndex } from "../chart/chart-interaction";
+import {
+  calendarLabels,
+  estimateLabelWidth,
+  labelGap,
+  labelStep,
+  rowTimeScale,
+  valueTicks,
+} from "../chart/chart-scales";
+import { stackSeries } from "../chart/chart-stack";
+import type { ChartDatum, ChartXValue } from "../chart/chart-types";
+
+/** The space between the bars of one category, in px, as long as the category has room for it. */
+export const BAR_GAP = 4;
+/**
+ * The radius at the value end of a bar, in px: 8. It
+ * is the kit's control radius, `--sp-rw-radius-control`, at the default md
+ * radius. An SVG path cannot read a token, so the number is kept here in step
+ * with it; a bar keeps it at every provider radius.
+ */
+export const BAR_RADIUS = 8;
+
+// The room beyond the plot, in px, in which the pointer still finds the first and the last category.
+const pointerSlack = 16;
+
+/** A number in hundredths of a pixel, which keeps the markup short and the same on the server and the client. */
+export const hundredths = (value: number) => Math.round(value * 100) / 100;
+
+export type BarOrientation = "vertical" | "horizontal";
+
+/** One bar in pixels, in the plot: its top-left corner and its size. */
+export type BarRect = {
+  /** `x|series`: the key of the bar, which stays with it while the data around it changes. */
+  key: string;
+  /** The key of its category. */
+  x: string;
+  series: string;
+  /** The number it stands for. */
+  value: number;
+  x0: number;
+  y0: number;
+  width: number;
+  height: number;
+  /**
+   * Which end is rounded: `end` is the value end, away from the 0 line, `start`
+   * the end at the 0 line. A bar rounds only its value end, and in a stack only
+   * the outer segment of each sign; the Bar Chart itself never asks for `start`.
+   */
+  rounded: "start" | "end" | "none";
+};
+
+/**
+ * A bar before it has a length: its place across its category, which it keeps
+ * while it lives, and the number it has right now. The numbers glide when new
+ * data arrives, and the bars are laid out again at every step of the glide.
+ */
+export type BarSlot = {
+  key: string;
+  x: string;
+  series: string;
+  /** The place of the series among the series of the chart, which is the order of a stack. */
+  order: number;
+  value: number;
+  /** Where the bar starts across its category, in px from the start of the category axis. */
+  start: number;
+  /** How thick the bar is across its category. */
+  size: number;
+};
+
+/**
+ * How thick the bars of a category are and where each starts inside its band.
+ * A lone bar and stacked segments take the whole band, and side-by-side bars
+ * share it with a gap, so the bars fill their band. In a
+ * band too narrow for the gap the gap gives way first; a bar is never thinner
+ * than 1 px, and bars that the band cannot hold at that thickness are centred
+ * on it. A bar is never thicker than `maxSize`, and bars that keep to it are
+ * centred on the band as a group.
+ */
+function thickness(
+  band: number,
+  count: number,
+  stacked: boolean,
+  maxSize = Number.POSITIVE_INFINITY,
+) {
+  // A cap that is not a positive number caps nothing.
+  const most = maxSize > 0 ? Math.max(1, maxSize) : Number.POSITIVE_INFINITY;
+  if (stacked || count <= 1) {
+    const size = Math.min(most, Math.max(1, band));
+    return {
+      offsets: Array.from({ length: count }, () => (band - size) / 2),
+      size,
+    };
+  }
+  let gap = BAR_GAP;
+  let size = Math.min(most, (band - gap * (count - 1)) / count);
+  if (size < 1) {
+    size = 1;
+    gap = Math.max(0, (band - count) / (count - 1));
+  }
+  const first = (band - (size * count + gap * (count - 1))) / 2;
+  return {
+    offsets: Array.from(
+      { length: count },
+      (_, index) => first + index * (size + gap),
+    ),
+    size,
+  };
+}
+
+/**
+ * Where the bar of the series at `order` sits in the band of its category, for
+ * `count` series side by side or stacked: where it starts across the category
+ * axis and how thick it is, at most `maxSize`. The band is where the category
+ * is, in px.
+ */
+export function barPlace(
+  band: { start: number; size: number },
+  order: number,
+  count: number,
+  stacked: boolean,
+  maxSize?: number,
+): { start: number; size: number } {
+  const { offsets, size } = thickness(band.size, count, stacked, maxSize);
+  return { size, start: hundredths(band.start + (offsets[order] ?? 0)) };
+}
+
+/**
+ * The bars of the data before any length: one for every finite value, in the
+ * order of the data and then of the series. A category that the scale does not
+ * know has none, and neither has a missing value, which leaves its slot empty.
+ * Categories must be unique; the chart makes repeated ones unique first.
+ */
+export function barSlots({
+  data,
+  x,
+  seriesKeys,
+  stacked,
+  categoryScale,
+  maxSize,
+}: {
+  data: readonly ChartDatum[];
+  x: string;
+  seriesKeys: readonly string[];
+  stacked: boolean;
+  categoryScale: ScaleBand<string>;
+  /** The thickest a bar may be, in px. */
+  maxSize?: number | undefined;
+}): BarSlot[] {
+  const size = categoryScale.bandwidth();
+  const slots: BarSlot[] = [];
+  for (const datum of data) {
+    const category = chartXKey(datum[x]);
+    const start = categoryScale(category);
+    if (start === undefined) continue;
+    seriesKeys.forEach((series, order) => {
+      const value = chartValue(datum, series);
+      if (value === null) return;
+      slots.push({
+        ...barPlace(
+          { size, start },
+          order,
+          seriesKeys.length,
+          stacked,
+          maxSize,
+        ),
+        key: `${category}|${series}`,
+        order,
+        series,
+        value,
+        x: category,
+      });
+    });
+  }
+  return slots;
+}
+
+/** The band of a category along its axis as fractions of the length of the axis, so that it says where the category is among the others and not how wide the chart is. */
+export type BandFraction = { start: number; size: number };
+
+// A fraction is kept to a billionth, so that the rounding noise of a chart that
+// is a little wider or narrower does not make it a different fraction.
+const billionths = (value: number) => Math.round(value * 1e9) / 1e9;
+
+/**
+ * Where the band of a category lies along its axis, as fractions of the axis. The
+ * fractions depend on how many categories there are and where this one is, and
+ * not on how wide the chart is: a chart that is resized keeps them. Null for a
+ * category the scale does not know.
+ */
+export function categoryFractions(
+  scale: ScaleBand<string>,
+  key: string,
+): BandFraction | null {
+  const at = scale(key);
+  if (at === undefined) return null;
+  const [from = 0, to = 0] = scale.range();
+  const length = Math.abs(to - from);
+  if (length === 0) return { size: 0, start: 0 };
+  return {
+    size: billionths(scale.bandwidth() / length),
+    start: billionths((at - Math.min(from, to)) / length),
+  };
+}
+
+/**
+ * The slots of the bars as they are drawn at this step of a glide. A bar that is
+ * leaving stays where it stood, and a bar in a band that is moving is placed in
+ * the band as it is now, so its place and thickness glide with the category; any
+ * other bar is where its slot says. `bands` holds the categories whose band is
+ * moving, as fractions of the `length` of the category axis, and `count` is the
+ * number of series. Each slot gets the number it has at this step.
+ */
+export function glidingSlots(
+  entries: readonly { leaving: boolean; slot: BarSlot; value: number }[],
+  bands: ReadonlyMap<string, BandFraction>,
+  {
+    count,
+    length,
+    maxSize,
+    stacked,
+  }: {
+    count: number;
+    length: number;
+    /** The thickest a bar may be, in px. */
+    maxSize?: number | undefined;
+    stacked: boolean;
+  },
+): BarSlot[] {
+  return entries.map(({ leaving, slot, value }) => {
+    const band = leaving ? undefined : bands.get(slot.x);
+    return band
+      ? {
+          ...slot,
+          ...barPlace(
+            { size: band.size * length, start: band.start * length },
+            slot.order,
+            count,
+            stacked,
+            maxSize,
+          ),
+          value,
+        }
+      : { ...slot, value };
+  });
+}
+
+// A name for the category in the rows that are stacked, which no series can have.
+const categoryField = "\u0000category";
+
+/**
+ * Where each bar of a stack starts and ends on the value axis, as `stackSeries`
+ * puts them, and which bars end a stack: the outer segment of each sign in each
+ * category. A segment of 0 has no extent and takes the end from none.
+ */
+function stackPlaces(slots: readonly BarSlot[]) {
+  const rows = new Map<string, ChartDatum>();
+  const orders = new Map<string, number>();
+  for (const slot of slots) {
+    const row = rows.get(slot.x) ?? { [categoryField]: slot.x };
+    row[slot.series] = slot.value;
+    rows.set(slot.x, row);
+    if (!orders.has(slot.series)) orders.set(slot.series, slot.order);
+  }
+  // The order of the series, and for series of one place the order of the list.
+  const keys = [...orders]
+    .sort((a, b) => a[1] - b[1])
+    .map(([series]) => series);
+  const places = new Map<string, { y0: number; y1: number }>();
+  const up = new Map<string, string>();
+  const down = new Map<string, string>();
+  for (const segment of stackSeries([...rows.values()], categoryField, keys)) {
+    const key = `${segment.x}|${segment.series}`;
+    places.set(key, { y0: segment.y0, y1: segment.y1 });
+    if (segment.value > 0) up.set(segment.x, key);
+    else if (segment.value < 0) down.set(segment.x, key);
+  }
+  return { ends: new Set([...up.values(), ...down.values()]), places };
+}
+
+/**
+ * The bars at the numbers they have right now, in the order of the slots. Side
+ * by side, a bar runs from the 0 line to its value; stacked, positive segments
+ * pile up from the 0 line and negative ones down from it, in the order of the
+ * series, so a stack stays whole whatever its segments are worth while they
+ * glide. A bar of 0 has no extent. `valueScale` maps a number to a position in
+ * the plot: from the top down for vertical bars, from the left for horizontal.
+ */
+export function barsAt(
+  slots: readonly BarSlot[],
+  {
+    stacked,
+    orientation,
+    valueScale,
+  }: {
+    stacked: boolean;
+    orientation: BarOrientation;
+    valueScale: ScaleLinear<number, number>;
+  },
+): BarRect[] {
+  const stack = stacked ? stackPlaces(slots) : null;
+  return slots.map((slot) => {
+    const place = stack?.places.get(slot.key);
+    const from = valueScale(place ? place.y0 : 0);
+    const to = valueScale(place ? place.y1 : slot.value);
+    const near = hundredths(Math.min(from, to));
+    const length = hundredths(Math.abs(to - from));
+    const rounded: BarRect["rounded"] = (
+      stack ? stack.ends.has(slot.key) : slot.value !== 0
+    )
+      ? "end"
+      : "none";
+    const base = {
+      key: slot.key,
+      rounded,
+      series: slot.series,
+      value: slot.value,
+      x: slot.x,
+    };
+    return orientation === "vertical"
+      ? { ...base, height: length, width: slot.size, x0: slot.start, y0: near }
+      : { ...base, height: slot.size, width: length, x0: near, y0: slot.start };
+  });
+}
+
+/**
+ * The bars of the data at rest, in pixels: a band per category and the bars
+ * inside it, side by side or stacked. The value end of a bar is rounded, the
+ * outer segment of each sign when stacked; a bar takes the thickness of its band
+ * (shared by the series side by side, with `BAR_GAP` between the bars of one
+ * category) and is at least 1 px thick. A negative value grows from the 0 line
+ * away from the positive ones.
+ */
+export function layoutBars({
+  data,
+  x,
+  seriesKeys,
+  stacked,
+  orientation,
+  categoryScale,
+  valueScale,
+}: {
+  data: readonly ChartDatum[];
+  x: string;
+  seriesKeys: readonly string[];
+  stacked: boolean;
+  orientation: BarOrientation;
+  categoryScale: ScaleBand<string>;
+  valueScale: ScaleLinear<number, number>;
+}): BarRect[] {
+  return barsAt(barSlots({ categoryScale, data, seriesKeys, stacked, x }), {
+    orientation,
+    stacked,
+    valueScale,
+  });
+}
+
+type Rounding = readonly [
+  topLeft: number,
+  topRight: number,
+  bottomRight: number,
+  bottomLeft: number,
+];
+
+// A rectangle with its own radius at each corner. A corner of 0 draws no arc.
+function roundedRectangle(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  [topLeft, topRight, bottomRight, bottomLeft]: Rounding,
+): string {
+  const arc = (radius: number, toX: number, toY: number) =>
+    radius > 0 ? ` A${radius},${radius} 0 0 1 ${toX},${toY}` : "";
+  return [
+    `M${hundredths(x + topLeft)},${hundredths(y)}`,
+    ` H${hundredths(x + width - topRight)}`,
+    arc(topRight, hundredths(x + width), hundredths(y + topRight)),
+    ` V${hundredths(y + height - bottomRight)}`,
+    arc(
+      bottomRight,
+      hundredths(x + width - bottomRight),
+      hundredths(y + height),
+    ),
+    ` H${hundredths(x + bottomLeft)}`,
+    arc(bottomLeft, hundredths(x), hundredths(y + height - bottomLeft)),
+    ` V${hundredths(y + topLeft)}`,
+    arc(topLeft, hundredths(x + topLeft), hundredths(y)),
+    " Z",
+  ].join("");
+}
+
+/**
+ * The outline of a bar: a rectangle with the radius at the end that is rounded,
+ * which is the far side of the 0 line for `end` (the top of a positive vertical
+ * bar, the bottom of a negative one, the right and the left of horizontal ones)
+ * and the side at the 0 line for `start`. The radius never exceeds a quarter of
+ * the thickness, so a thin bar keeps a light curve, or the length of the bar.
+ */
+export function barPath(
+  { x0, y0, width, height, rounded, value }: BarRect,
+  orientation: BarOrientation,
+  radius: number = BAR_RADIUS,
+): string {
+  const vertical = orientation === "vertical";
+  const r =
+    rounded === "none"
+      ? 0
+      : Math.max(
+          0,
+          Math.min(
+            radius,
+            (vertical ? width : height) / 4,
+            vertical ? height : width,
+          ),
+        );
+  // The side of the value end, then of the start when that is the one rounded.
+  const positive = value >= 0;
+  const end = vertical
+    ? positive
+      ? "top"
+      : "bottom"
+    : positive
+      ? "right"
+      : "left";
+  const opposite = {
+    bottom: "top",
+    left: "right",
+    right: "left",
+    top: "bottom",
+  }[end];
+  const side = rounded === "end" ? end : opposite;
+  const corners: Rounding =
+    side === "top"
+      ? [r, r, 0, 0]
+      : side === "bottom"
+        ? [0, 0, r, r]
+        : side === "left"
+          ? [r, 0, 0, r]
+          : [0, r, r, 0];
+  return roundedRectangle(x0, y0, width, height, corners);
+}
+
+/** The space of a category along the category axis, in px: where it starts and how wide it is, a whole step between two categories, so that the spaces of all categories tile the plot. Its middle is where the tooltip of a category opens from the keyboard or a tap. Null for a category the scale does not know. */
+export function categoryBand(
+  scale: ScaleBand<string>,
+  key: string,
+): { start: number; size: number } | null {
+  const at = scale(key);
+  if (at === undefined) return null;
+  const step = scale.step();
+  return {
+    size: hundredths(step),
+    start: hundredths(at - (step - scale.bandwidth()) / 2),
+  };
+}
+
+/** The centre of every category along the category axis, in px, in the order of `keys`. */
+export function categoryCentres(
+  scale: ScaleBand<string>,
+  keys: readonly string[],
+): number[] {
+  return keys.map((key) =>
+    hundredths((scale(key) ?? 0) + scale.bandwidth() / 2),
+  );
+}
+
+/**
+ * The category under a point along the category axis: the one whose centre is
+ * nearest, which is the band the point is in, for a point anywhere in the plot
+ * and a little beyond its ends. -1 for a point further out, and for no category.
+ */
+export function categoryAt(
+  centres: readonly number[],
+  along: number,
+  length: number,
+): number {
+  if (along < -pointerSlack || along > length + pointerSlack) return -1;
+  return nearestIndex(centres, along);
+}
+
+/** A label of the category axis: where it sits and what it says. */
+export type CategoryLabel = { id: string; position: number; text: string };
+
+/**
+ * The labels of the category axis that are shown: every k-th label, one k for the
+ * whole axis, the smallest that leaves none on top of another, so the labels keep
+ * an even rhythm however many categories there are. Along the bottom they are as
+ * wide as their text; down the left side as tall as a line. Dates are labelled
+ * on calendar ticks instead, the first of a day, a week, a month or a quarter,
+ * as many as fit, as the Line and the Area Chart label theirs (`calendarLabels`,
+ * Lukas, 3 November 2026): the bars keep their own dates, and a tick between
+ * two bars stands between them, as far along as its date is. A tick on the date
+ * of a bar takes that bar's key.
+ */
+export function categoryLabels({
+  centres,
+  rows,
+  side,
+  format,
+}: {
+  centres: readonly number[];
+  rows: readonly { id: string; x: ChartXValue }[];
+  side: "bottom" | "left";
+  format: (value: ChartXValue) => string;
+}): CategoryLabel[] {
+  const size =
+    side === "bottom" ? estimateLabelWidth : (): number => CHART_LABEL_HEIGHT;
+  const gap = side === "bottom" ? labelGap : CHART_LABEL_COLUMN_GAP;
+  const dates = rows.map((row) => row.x);
+  if (dates.every((x): x is Date => x instanceof Date)) {
+    const scale = rowTimeScale(dates, centres);
+    if (scale) return calendarLabels(scale, format, size, gap);
+  }
+  const labels = rows.map((row, index) => ({
+    id: row.id,
+    position: centres[index] ?? 0,
+    text: format(row.x),
+  }));
+  const step = labelStep(
+    labels.map((label) => label.position),
+    labels.map((label) => size(label.text)),
+    gap,
+  );
+  return labels.filter((_, index) => index % step === 0);
+}
+
+/** The space between the end of a bar and its value label, in px. */
+export const BAR_VALUE_LABEL_OFFSET = 6;
+// The least space between two value labels, in px.
+const valueLabelGap = 4;
+
+/** A value label as it is drawn: what it says and the point its text hangs from. */
+export type BarValueLabel = {
+  /** The key of its bar, or of its stack and the sign it sums. */
+  key: string;
+  /** The key of its category. */
+  category: string;
+  text: string;
+  x: number;
+  y: number;
+  /**
+   * Where the text sits from its point: above or below the end of a column,
+   * after or before the end of a horizontal bar, by the offset.
+   */
+  side: "above" | "below" | "after" | "before";
+};
+
+/**
+ * The texts of the value labels the data asks for, by sign: the value of every
+ * bar, or in a stack the sum of each sign in each category that has one. A
+ * value of 0 counts as positive, so it is written above the 0 line. The chart
+ * keeps room for them before it lays out its bars.
+ */
+export function valueLabelTexts(
+  values: readonly (readonly (number | null)[])[],
+  stacked: boolean,
+  format: (value: number) => string,
+): { positive: string[]; negative: string[] } {
+  const positive: string[] = [];
+  const negative: string[] = [];
+  const rowCount = Math.max(0, ...values.map((own) => own.length));
+  for (let row = 0; row < rowCount; row++) {
+    const own = values
+      .map((series) => series[row])
+      .filter((value): value is number => typeof value === "number");
+    if (!stacked) {
+      for (const value of own)
+        (value >= 0 ? positive : negative).push(format(value));
+      continue;
+    }
+    const up = own.filter((value) => value >= 0);
+    const down = own.filter((value) => value < 0);
+    if (up.length > 0) positive.push(format(up.reduce((a, b) => a + b, 0)));
+    if (down.length > 0) negative.push(format(down.reduce((a, b) => a + b, 0)));
+  }
+  return { negative, positive };
+}
+
+/**
+ * The room value labels need beyond the ends of the bars, in px, at the start
+ * of the value axis (where negative bars end: the bottom of a column chart, the
+ * left of a horizontal one) and at its end (where positive bars end): the
+ * offset and a line of text for columns, the offset and the widest label for
+ * horizontal bars. None on a side that no label is written to.
+ */
+export function valueLabelRoom(
+  texts: { positive: readonly string[]; negative: readonly string[] },
+  orientation: BarOrientation,
+): { start: number; end: number } {
+  const need = (side: readonly string[]) =>
+    side.length === 0
+      ? 0
+      : BAR_VALUE_LABEL_OFFSET +
+        (orientation === "vertical"
+          ? CHART_LABEL_HEIGHT
+          : Math.ceil(Math.max(...side.map(estimateLabelWidth))));
+  return { end: need(texts.positive), start: need(texts.negative) };
+}
+
+/**
+ * The value labels of the bars as they are drawn: the value of each bar at its
+ * end, centred on a column and beside a horizontal bar, or in a stack the sum
+ * of each sign at the end of its outer segment. A positive value is written
+ * beyond the far end of its bar, a negative one below or before it.
+ */
+export function barValueLabels(
+  bars: readonly BarRect[],
+  {
+    format,
+    orientation,
+    stacked,
+  }: {
+    format: (value: number) => string;
+    orientation: BarOrientation;
+    stacked: boolean;
+  },
+): BarValueLabel[] {
+  const vertical = orientation === "vertical";
+  const label = (
+    key: string,
+    category: string,
+    value: number,
+    end: number,
+    across: number,
+  ): BarValueLabel => {
+    const positive = value >= 0;
+    const beyond = hundredths(
+      end + (positive === vertical ? -1 : 1) * BAR_VALUE_LABEL_OFFSET,
+    );
+    return {
+      category,
+      key,
+      side: vertical
+        ? positive
+          ? "above"
+          : "below"
+        : positive
+          ? "after"
+          : "before",
+      text: format(value),
+      x: vertical ? across : beyond,
+      y: vertical ? beyond : across,
+    };
+  };
+  const middle = (bar: BarRect) =>
+    hundredths(vertical ? bar.x0 + bar.width / 2 : bar.y0 + bar.height / 2);
+  // The far end of a bar from the 0 line, along the value axis.
+  const far = (bar: BarRect) =>
+    vertical
+      ? bar.value >= 0
+        ? bar.y0
+        : bar.y0 + bar.height
+      : bar.value >= 0
+        ? bar.x0 + bar.width
+        : bar.x0;
+  if (!stacked)
+    return bars.map((bar) =>
+      label(bar.key, bar.x, bar.value, far(bar), middle(bar)),
+    );
+  const stacks = new Map<string, { down: BarRect[]; up: BarRect[] }>();
+  for (const bar of bars) {
+    const stack = stacks.get(bar.x) ?? { down: [], up: [] };
+    (bar.value >= 0 ? stack.up : stack.down).push(bar);
+    stacks.set(bar.x, stack);
+  }
+  return [...stacks].flatMap(([category, stack]) =>
+    (["up", "down"] as const).flatMap((sign) => {
+      const own = stack[sign];
+      if (own.length === 0) return [];
+      const ends = own.map(far);
+      // The outer end of the stack: furthest from the 0 line on its side.
+      const end =
+        (sign === "up") === vertical ? Math.min(...ends) : Math.max(...ends);
+      const sum = own.reduce((total, bar) => total + bar.value, 0);
+      return [
+        label(`${category}|${sign}`, category, sum, end, middle(own[0]!)),
+      ];
+    }),
+  );
+}
+
+/**
+ * The value labels that are drawn: every k-th category keeps its labels, one k
+ * for the whole chart, the smallest for which no two labels touch, as the axis
+ * keeps every k-th label. None when two labels of one category touch, as on
+ * side by side bars too thin for their labels. `labels` are in the order of
+ * the categories along their axis.
+ */
+export function visibleValueLabels(
+  labels: readonly BarValueLabel[],
+  orientation: BarOrientation,
+): BarValueLabel[] {
+  const vertical = orientation === "vertical";
+  const along = (label: BarValueLabel) => (vertical ? label.x : label.y);
+  const size = (label: BarValueLabel) =>
+    vertical ? estimateLabelWidth(label.text) : CHART_LABEL_HEIGHT;
+  const categories = new Map<string, BarValueLabel[]>();
+  for (const label of labels) {
+    const own = categories.get(label.category) ?? [];
+    own.push(label);
+    categories.set(label.category, own);
+  }
+  for (const own of categories.values())
+    for (const side of ["above", "below", "after", "before"] as const) {
+      const row = own
+        .filter((label) => label.side === side)
+        .sort((a, b) => along(a) - along(b));
+      for (let index = 1; index < row.length; index++) {
+        const before = row[index - 1]!;
+        const label = row[index]!;
+        if (
+          along(label) - along(before) <
+          (size(label) + size(before)) / 2 + valueLabelGap
+        )
+          return [];
+      }
+    }
+  // Each category as one stretch along the category axis.
+  const stretches = [...categories.values()].map((own) => {
+    const start = Math.min(
+      ...own.map((label) => along(label) - size(label) / 2),
+    );
+    const end = Math.max(...own.map((label) => along(label) + size(label) / 2));
+    return { centre: (start + end) / 2, size: end - start };
+  });
+  const step = labelStep(
+    stretches.map((stretch) => stretch.centre),
+    stretches.map((stretch) => stretch.size),
+    valueLabelGap,
+  );
+  const kept = new Set(
+    [...categories.keys()].filter((_, index) => index % step === 0),
+  );
+  return labels.filter((label) => kept.has(label.category));
+}
+
+/**
+ * The ticks of a value axis that runs along the bottom, where a label takes the
+ * room of its text: the ticks the axis has, or every k-th of them, the smallest
+ * k for which no two labels touch. `write` gives the labels of a set of ticks.
+ * The ticks that stay are still on the steps of the axis, so they keep the grid
+ * lines on the places of the nice domain.
+ */
+export function fittingTicks(
+  scale: ScaleLinear<number, number>,
+  length: number,
+  write: (ticks: readonly number[]) => string[],
+): number[] {
+  const ticks = valueTicks(scale, length);
+  const step = labelStep(
+    ticks.map(scale),
+    write(ticks).map(estimateLabelWidth),
+  );
+  const kept = ticks.filter((_, index) => index % step === 0);
+  // An axis keeps its two ends when every other tick has to go.
+  return kept.length >= 2 || ticks.length < 2
+    ? kept
+    : [ticks[0]!, ticks[ticks.length - 1]!];
+}

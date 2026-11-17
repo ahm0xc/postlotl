@@ -1,0 +1,735 @@
+@layer theme, base, components, ui, utilities;
+
+@layer ui {
+  /* The day cell, and with it the navigation, follows the control size: 40 px
+   * at the default sm, the size lg had before the control ladder moved to
+   * 4 px steps, 48 px at md, as xl had, and 52 and 56 px at lg and xl (Lukas,
+   * 30 October 2026). xs is the compact calendar of a narrow column, 32 px,
+   * the sm of 1.x (Lukas, 7 November 2026). It comes only from the
+   * Calendar's `size`, never from a provider, whose sizes start at sm; the
+   * text stays 14 px. The picker popup below takes the same cells, from the
+   * same tokens. The weights are the kit's text roles (Lukas, 4 November
+   * 2026): the month heading, the picker's heading, today and the chosen day
+   * take the label role (500), and the weekday row, the grid's column
+   * headings, the heading role (480), as a Table's column headings do. The
+   * two tokens are hooks that read the roles; the calendar had weights of its
+   * own, 560 and 480. */
+  :root {
+    --sp-rw-calendar-cell-xs: 2rem;
+    --sp-rw-calendar-cell-sm: 2.5rem;
+    --sp-rw-calendar-cell-md: 3rem;
+    --sp-rw-calendar-cell-lg: 3.25rem;
+    --sp-rw-calendar-cell-xl: 3.5rem;
+    --sp-rw-calendar-font-weight-emphasis: var(--sp-rw-font-weight-label);
+    --sp-rw-calendar-font-weight-weekday: var(--sp-rw-font-weight-heading);
+    /* The list of shortcuts beside the months, 152 px (Lukas, 2 November 2026).
+     * A date picker's panel lines its footer
+     * up with the list by the same width. */
+    --sp-rw-calendar-shortcut-list-width: calc(var(--sp-rw-space) * 38);
+  }
+
+  .sp-calendar,
+  .sp-calendar-picker-popup {
+    --calendar-cell-size: var(--sp-rw-calendar-cell-sm);
+  }
+
+  .sp-calendar[data-size="xs"],
+  .sp-calendar-picker-popup[data-calendar-size="xs"] {
+    --calendar-cell-size: var(--sp-rw-calendar-cell-xs);
+  }
+
+  .sp-calendar[data-size="md"],
+  .sp-calendar-picker-popup[data-calendar-size="md"] {
+    --calendar-cell-size: var(--sp-rw-calendar-cell-md);
+  }
+
+  .sp-calendar[data-size="lg"],
+  .sp-calendar-picker-popup[data-calendar-size="lg"] {
+    --calendar-cell-size: var(--sp-rw-calendar-cell-lg);
+  }
+
+  .sp-calendar[data-size="xl"],
+  .sp-calendar-picker-popup[data-calendar-size="xl"] {
+    --calendar-cell-size: var(--sp-rw-calendar-cell-xl);
+  }
+
+  .sp-calendar {
+    display: grid;
+    position: relative;
+    width: max-content;
+    color: var(--sp-rw-fg-primary);
+    font-size: var(--sp-rw-font-14);
+    line-height: var(--sp-rw-line-21);
+  }
+
+  .sp-calendar-header {
+    display: grid;
+    grid-template-columns: var(--calendar-cell-size) 1fr var(
+        --calendar-cell-size
+      );
+    align-items: center;
+    margin-bottom: var(--sp-rw-space-2);
+  }
+
+  /* Quick choices between the heading and the days: accent links spread over the
+   * width of the grid, with the grid's own spacing below. The row takes the width
+   * the days give the calendar and wraps within it, so long labels never widen the
+   * calendar. A calendar with several months shows the row once, centred above
+   * them. */
+  .sp-calendar-shortcuts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--sp-rw-space-1) var(--sp-rw-space-3);
+    margin-bottom: var(--sp-rw-space-2);
+    padding-inline: var(--sp-rw-space-2);
+    contain: inline-size;
+  }
+
+  .sp-calendar[data-visible-months] .sp-calendar-shortcuts {
+    justify-content: center;
+    column-gap: var(--sp-rw-space-6);
+  }
+
+  /* The shortcuts as a list beside the months (shortcutsLayout="list"): the
+   * list runs from the top of the panel the calendar fills to its bottom, 12
+   * px inside, with a hairline at its end, and the months keep the 16 px
+   * padding of a picker's panel. Its rows are the List Box's, the height of
+   * the calendar's control size, and the row of the range the calendar shows
+   * is selected. */
+  .sp-calendar[data-shortcuts-layout="list"] {
+    grid-template-columns: var(--sp-rw-calendar-shortcut-list-width) auto;
+  }
+
+  .sp-calendar-shortcut-list {
+    display: grid;
+    align-content: start;
+    min-width: 0;
+    border-inline-end: var(--sp-rw-border-default) solid
+      var(--sp-rw-border-translucent);
+    padding: var(--sp-rw-space-3);
+  }
+
+  .sp-calendar-main {
+    --sp-calendar-bleed: var(--sp-rw-space-4);
+    display: grid;
+    align-content: start;
+    padding: var(--sp-calendar-bleed);
+  }
+
+  /* Months beside a list fill its height, so the hairline between them runs
+   * from the panel's top to its bottom, beside the list's own. */
+  .sp-calendar-main:has(> .sp-calendar-months) {
+    align-content: stretch;
+  }
+
+  /* The date input and the Today button between the heading and the days of
+   * a single calendar (showDateInput, showToday):
+   * the input takes the row and the button keeps its own width,
+   * 12 px apart, both of the calendar's control size. The row takes the width
+   * the days give the calendar, so it never widens it. */
+  .sp-calendar-toolbar {
+    display: flex;
+    gap: var(--sp-rw-space-3);
+    margin-bottom: var(--sp-rw-space-2);
+    contain: inline-size;
+  }
+
+  .sp-calendar-toolbar .sp-date-field-control {
+    flex: 1 1 auto;
+  }
+
+  /* A header holds the Previous button only on the first month and the Next
+   * button only on the last, so each part names its own column. */
+  .sp-calendar-previous {
+    grid-column: 1;
+  }
+
+  .sp-calendar-next {
+    grid-column: 3;
+  }
+
+  :is(.sp-calendar-previous, .sp-calendar-next) svg {
+    width: var(--sp-rw-space-4);
+    height: var(--sp-rw-space-4);
+  }
+
+  .sp-calendar-heading {
+    grid-column: 2;
+    margin: 0;
+    color: var(--sp-rw-fg-primary);
+    font-size: var(--sp-rw-font-14);
+    font-weight: var(--sp-rw-calendar-font-weight-emphasis);
+    text-align: center;
+  }
+
+  /* The heading icons take the tertiary text colour. */
+  .sp-calendar-heading-trigger svg,
+  .sp-calendar-picker-heading svg {
+    color: var(--sp-rw-fg-tertiary);
+  }
+
+  /* The glyphs of the navigation and the headings stay 16 px (I3) at every
+   * size, as they were beside the 14 px heading before the Button ladder gave
+   * a Button of the default size a 20 px icon (Lukas, 30 October 2026). */
+  :root [data-chassis][data-size].sp-calendar-previous,
+  :root [data-chassis][data-size].sp-calendar-next,
+  :root [data-chassis][data-size].sp-calendar-heading-trigger,
+  :root [data-chassis][data-size].sp-calendar-picker-previous,
+  :root [data-chassis][data-size].sp-calendar-picker-next,
+  :root [data-chassis][data-size].sp-calendar-picker-heading {
+    --sp-rw-button-icon: var(--sp-rw-control-icon);
+  }
+
+  /* A month's header and the month and year picker's are one header: Previous
+   * and Next as wide and as tall as a day, and the heading between them, a
+   * Button as tall, 8 px inside its edges and 4 px from its text to its
+   * caret, in the calendar's text, 14 px on its 21 px line, at the emphasis
+   * weight. These rules outrank the Button chassis, whose size rules set a
+   * Button's box and type. A month's header had rules of its own that the
+   * chassis beat, so its three Buttons were the chassis's sm box, 36 px with
+   * a 14/20 label and 12 px inside, beside 40 px days and the picker's 40 px
+   * header (cleanup of 4 November 2026). */
+  :root [data-chassis][data-size].sp-calendar-previous,
+  :root [data-chassis][data-size].sp-calendar-next,
+  :root [data-chassis][data-size].sp-calendar-picker-previous,
+  :root [data-chassis][data-size].sp-calendar-picker-next {
+    width: var(--calendar-cell-size);
+    height: var(--calendar-cell-size);
+    min-height: var(--calendar-cell-size);
+    padding: 0;
+  }
+
+  :root [data-chassis][data-size].sp-calendar-heading-trigger,
+  :root [data-chassis][data-size].sp-calendar-picker-heading {
+    height: var(--calendar-cell-size);
+    min-height: var(--calendar-cell-size);
+    gap: var(--sp-rw-space-1);
+    padding: 0 var(--sp-rw-space-2);
+    font: inherit;
+    font-weight: var(--sp-rw-calendar-font-weight-emphasis);
+  }
+
+  .sp-calendar-heading-motion-frame {
+    display: inline-grid;
+    overflow: hidden;
+  }
+
+  .sp-calendar-heading-motion {
+    grid-area: 1 / 1;
+    white-space: nowrap;
+    will-change: transform;
+  }
+
+  .sp-calendar-picker {
+    position: relative;
+    width: 100%;
+    min-height: calc(var(--calendar-cell-size) * 5 + var(--sp-rw-space-7));
+    overflow: hidden;
+  }
+
+  .sp-calendar-picker-page {
+    box-sizing: border-box;
+    padding: calc(
+      var(--sp-semantic-state-focus-width) +
+        var(--sp-semantic-state-focus-offset)
+    );
+  }
+
+  .sp-calendar-picker[data-motion-active] {
+    pointer-events: none;
+  }
+
+  .sp-calendar-picker-page[data-motion-state="exit"] {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+  }
+
+  .sp-calendar-picker-heading-motion-frame {
+    display: inline-grid;
+    overflow: hidden;
+  }
+
+  .sp-calendar-picker-heading-motion {
+    grid-area: 1 / 1;
+  }
+
+  :is(
+    .sp-calendar-picker-page,
+    .sp-calendar-picker-heading-motion
+  )[data-motion-state] {
+    animation-duration: var(--motion-duration-slow);
+    animation-fill-mode: both;
+    animation-timing-function: var(--motion-ease-standard);
+  }
+
+  :is(
+      .sp-calendar-picker-page,
+      .sp-calendar-picker-heading-motion
+    )[data-motion-state="enter"][data-direction="next"] {
+    animation-name: sp-calendar-slide-in-from-right;
+  }
+
+  :is(
+      .sp-calendar-picker-page,
+      .sp-calendar-picker-heading-motion
+    )[data-motion-state="exit"][data-direction="next"] {
+    animation-name: sp-calendar-slide-out-to-left;
+  }
+
+  :is(
+      .sp-calendar-picker-page,
+      .sp-calendar-picker-heading-motion
+    )[data-motion-state="enter"][data-direction="previous"] {
+    animation-name: sp-calendar-slide-in-from-left;
+  }
+
+  :is(
+      .sp-calendar-picker-page,
+      .sp-calendar-picker-heading-motion
+    )[data-motion-state="exit"][data-direction="previous"] {
+    animation-name: sp-calendar-slide-out-to-right;
+  }
+
+  .sp-calendar-picker-page[data-motion-state="enter"][data-direction="drill-in"] {
+    animation-name: sp-calendar-picker-enter-from-top;
+  }
+
+  .sp-calendar-picker-page[data-motion-state="exit"][data-direction="drill-in"] {
+    animation-name: sp-calendar-picker-exit-to-bottom;
+  }
+
+  .sp-calendar-picker-page[data-motion-state="enter"][data-direction="drill-out"] {
+    animation-name: sp-calendar-picker-enter-from-bottom;
+  }
+
+  .sp-calendar-picker-page[data-motion-state="exit"][data-direction="drill-out"] {
+    animation-name: sp-calendar-picker-exit-to-top;
+  }
+
+  .sp-calendar-picker-popup {
+    width: calc(var(--calendar-cell-size) * 6);
+    border-radius: var(--sp-rw-radius-surface);
+  }
+
+  .sp-calendar-picker-header {
+    display: grid;
+    grid-template-columns: var(--calendar-cell-size) 1fr var(
+        --calendar-cell-size
+      );
+    align-items: center;
+    margin-bottom: var(--sp-rw-space-2);
+  }
+
+  /* The picker's heading stands in the middle of its header's column; a
+   * month's heading is centred by the text of its h2. */
+  :root [data-chassis][data-size].sp-calendar-picker-heading {
+    justify-self: center;
+  }
+
+  .sp-calendar-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--sp-rw-space-1);
+  }
+
+  :root [data-chassis][data-size].sp-calendar-picker-option {
+    width: 100%;
+    min-width: 0;
+    height: var(--calendar-cell-size);
+    min-height: var(--calendar-cell-size);
+    padding: 0 var(--sp-rw-space-1);
+    font: inherit;
+  }
+
+  :root [data-chassis][data-size].sp-calendar-picker-option[data-selected] {
+    --sp-rw-button-fill: var(--sp-rw-bg-accent);
+    --sp-rw-button-text: var(--sp-rw-fg-on-accent);
+    --sp-rw-button-depth: none;
+    --sp-rw-button-interaction: transparent;
+    --sp-rw-button-spotlights: none;
+    --sp-rw-button-dome: none;
+    --sp-rw-button-rim: none;
+    --sp-rw-button-micro: none;
+
+    background: var(--sp-rw-bg-accent);
+    color: var(--sp-rw-fg-on-accent);
+    box-shadow: none;
+  }
+
+  @keyframes sp-calendar-picker-enter-from-top {
+    from {
+      transform: translateY(-100%);
+    }
+
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes sp-calendar-picker-exit-to-bottom {
+    from {
+      transform: translateY(0);
+    }
+
+    to {
+      transform: translateY(100%);
+    }
+  }
+
+  @keyframes sp-calendar-picker-enter-from-bottom {
+    from {
+      transform: translateY(100%);
+    }
+
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes sp-calendar-picker-exit-to-top {
+    from {
+      transform: translateY(0);
+    }
+
+    to {
+      transform: translateY(-100%);
+    }
+  }
+
+  .sp-calendar-grid-frame {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sp-calendar-month-motion {
+    width: 100%;
+    will-change: transform;
+  }
+
+  .sp-calendar-month-motion[data-motion-state="exit"] {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  :is(
+      .sp-calendar-heading-motion,
+      .sp-calendar-month-motion
+    )[data-motion-state="enter"][data-direction="next"] {
+    animation: sp-calendar-slide-in-from-right var(--motion-duration-slow)
+      var(--motion-ease-standard) both;
+  }
+
+  :is(
+      .sp-calendar-heading-motion,
+      .sp-calendar-month-motion
+    )[data-motion-state="exit"][data-direction="next"] {
+    animation: sp-calendar-slide-out-to-left var(--motion-duration-slow)
+      var(--motion-ease-standard) both;
+  }
+
+  :is(
+      .sp-calendar-heading-motion,
+      .sp-calendar-month-motion
+    )[data-motion-state="enter"][data-direction="previous"] {
+    animation: sp-calendar-slide-in-from-left var(--motion-duration-slow)
+      var(--motion-ease-standard) both;
+  }
+
+  :is(
+      .sp-calendar-heading-motion,
+      .sp-calendar-month-motion
+    )[data-motion-state="exit"][data-direction="previous"] {
+    animation: sp-calendar-slide-out-to-right var(--motion-duration-slow)
+      var(--motion-ease-standard) both;
+  }
+
+  .sp-calendar-grid {
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+
+  /* Consecutive months share one selection and one Previous and Next pair; each
+   * month has its own header. A day of the neighbouring month shows in that
+   * month's own grid, not twice. A hairline divides the months, 24 px from
+   * each (rulebook B4; Lukas, 2 November 2026; they stood 24 px apart with no
+   * line). The line runs through the padding the calendar sits in,
+   * --sp-calendar-bleed, which a panel or a picker's popover sets, so it meets
+   * the panel's edge and the hairline of a footer below, as the line of a list
+   * of shortcuts does. */
+  .sp-calendar-months {
+    display: flex;
+    gap: var(--sp-rw-space-6);
+  }
+
+  .sp-calendar-month + .sp-calendar-month {
+    margin-block: calc(var(--sp-calendar-bleed, 0px) * -1);
+    border-inline-start: var(--sp-rw-border-default) solid
+      var(--sp-rw-border-translucent);
+    padding-block: var(--sp-calendar-bleed, 0px);
+    padding-inline-start: var(--sp-rw-space-6);
+  }
+
+  /* Under a row of shortcuts the line starts at the months. */
+  .sp-calendar-shortcuts
+    + .sp-calendar-months
+    > .sp-calendar-month
+    + .sp-calendar-month {
+    margin-block-start: 0;
+    padding-block-start: 0;
+  }
+
+  .sp-calendar-month {
+    display: grid;
+    align-content: start;
+  }
+
+  .sp-calendar[data-visible-months] .sp-calendar-cell[data-outside-month] {
+    visibility: hidden;
+  }
+
+  .sp-calendar-grid-body td {
+    padding-block: 1px;
+  }
+
+  .sp-calendar-header-cell {
+    width: var(--calendar-cell-size);
+    height: calc(var(--calendar-cell-size) - var(--sp-rw-space-1));
+    padding: 0;
+    color: var(--sp-rw-fg-tertiary);
+    font-size: var(--sp-rw-font-12);
+    font-weight: var(--sp-rw-calendar-font-weight-weekday);
+    text-align: center;
+  }
+
+  /* One transition for every selection mode: a picked day fades to the accent, and
+   * in a range the start, the end and the days between them fade the same way, on
+   * the same tokens. Reduced motion shortens it for all of them below. */
+  .sp-calendar-cell {
+    display: grid;
+    position: relative;
+    width: var(--calendar-cell-size);
+    height: var(--calendar-cell-size);
+    place-items: center;
+    border-radius: var(--sp-rw-radius-control);
+    padding: 0;
+    outline: none;
+    color: var(--sp-rw-fg-primary);
+    cursor: pointer;
+    text-align: center;
+    transition:
+      background-color var(--motion-duration-fast) var(--motion-ease-navigation),
+      box-shadow var(--motion-duration-fast) var(--motion-ease-navigation),
+      color var(--motion-duration-fast) var(--motion-ease-navigation),
+      opacity var(--motion-duration-fast) var(--motion-ease-navigation);
+  }
+
+  .sp-calendar-cell[data-hovered]:not([data-selected]) {
+    background: var(--state-hover);
+  }
+
+  .sp-calendar-cell[data-pressed]:not([data-selected]) {
+    background: var(--state-pressed);
+  }
+
+  .sp-calendar-cell[data-selected] {
+    background: var(--sp-rw-bg-accent);
+    color: var(--sp-rw-fg-on-accent);
+    font-weight: var(--sp-rw-calendar-font-weight-emphasis);
+  }
+
+  .sp-calendar[data-selection-mode="range"]
+    .sp-calendar-cell[data-selected]:not([data-selection-start]):not(
+      [data-selection-end]
+    ) {
+    background: var(--sp-rw-bg-accent-translucent);
+    color: var(--sp-rw-fg-accent);
+  }
+
+  .sp-calendar-grid-body
+    td:has(> .sp-calendar-cell[data-selected]):has(
+      + td > .sp-calendar-cell[data-selected]
+    )
+    > .sp-calendar-cell[data-selected] {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+  }
+
+  .sp-calendar-grid-body
+    td:has(> .sp-calendar-cell[data-selected])
+    + td:has(> .sp-calendar-cell[data-selected])
+    > .sp-calendar-cell[data-selected] {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+  }
+
+  .sp-calendar-grid-body
+    tr:has(> td:last-child > .sp-calendar-cell[data-selected]):has(
+      + tr > td:first-child > .sp-calendar-cell[data-selected]
+    )
+    > td:last-child
+    > .sp-calendar-cell[data-selected] {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+  }
+
+  .sp-calendar-grid-body
+    tr:has(> td:last-child > .sp-calendar-cell[data-selected])
+    + tr
+    > td:first-child
+    > .sp-calendar-cell[data-selected] {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+  }
+
+  /* A day's keyboard focus is the kit's focus ring, inside its cell, in the
+   * focus colour of every focus ring (--sp-rw-border-focus; it drew the
+   * semantic focus colour, Tailwind's blue-500, 4 November 2026). */
+  .sp-calendar-cell[data-focus-visible] {
+    outline: var(--sp-semantic-state-focus-width) solid
+      var(--sp-rw-border-focus);
+    outline-offset: calc(var(--sp-semantic-state-focus-width) * -1);
+  }
+
+  /* Today keeps the weight of a selected day and shows a dot under its
+   * number (Lukas, 31 October 2026; it was a
+   * hairline box around the day). The dot is 5 px round and its top 11 px
+   * under the middle of the day: 4 px above the bottom of the 40 px day of sm,
+   * and as close under the number at every size. It keeps at least those 4 px
+   * above the bottom, so in the 32 px day of xs it rises to 23 px and never
+   * meets the edge of the fill or the inset focus ring (7 November 2026). It takes
+   * the accent text colour, and on a selected day the colour of the number,
+   * so it keeps the number's contrast on the accent fill and in a range, and
+   * it changes colour with the day's fill. */
+  .sp-calendar-cell[data-today]:not([data-selected]) {
+    font-weight: var(--sp-rw-calendar-font-weight-emphasis);
+  }
+
+  .sp-calendar-cell[data-today]::after {
+    position: absolute;
+    top: min(
+      calc(50% + var(--sp-rw-space) * 2.75),
+      calc(100% - var(--sp-rw-space) * 2.25)
+    );
+    inset-inline: 0;
+    width: calc(var(--sp-rw-space) * 1.25);
+    height: calc(var(--sp-rw-space) * 1.25);
+    margin-inline: auto;
+    border-radius: var(--sp-rw-radius-full);
+    background: var(--sp-rw-fg-accent);
+    content: "";
+    pointer-events: none;
+    transition: background-color var(--motion-duration-fast)
+      var(--motion-ease-navigation);
+  }
+
+  .sp-calendar-cell[data-today][data-selected]::after {
+    background: currentColor;
+  }
+
+  .sp-calendar-cell[data-outside-month] {
+    color: var(--sp-rw-fg-quaternary);
+  }
+
+  /* A day that cannot be chosen shows not-allowed. A disabled day and a day
+   * outside the visible range also fade; an unavailable day is struck through
+   * instead. */
+  .sp-calendar-cell:is(
+    [data-disabled],
+    [data-outside-visible-range],
+    [data-unavailable]
+  ) {
+    cursor: not-allowed;
+  }
+
+  .sp-calendar-cell:is([data-disabled], [data-outside-visible-range]) {
+    opacity: var(--sp-rw-disabled-opacity-calendar-day);
+  }
+
+  .sp-calendar-cell[data-unavailable] {
+    color: var(--sp-rw-fg-tertiary);
+    text-decoration: line-through;
+  }
+
+  .sp-calendar[data-invalid] .sp-calendar-cell[data-selected] {
+    background: var(--sp-rw-bg-destructive);
+  }
+
+  /* A disabled Calendar fades once; its days, disabled with it, do not fade a
+   * second time. */
+  .sp-calendar[data-disabled] {
+    opacity: var(--sp-rw-disabled-opacity-action);
+  }
+
+  .sp-calendar[data-disabled] .sp-calendar-cell {
+    opacity: 1;
+  }
+
+  [dir="rtl"] :is(.sp-calendar-previous, .sp-calendar-next) svg {
+    transform: rotate(180deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sp-calendar-previous,
+    .sp-calendar-next,
+    .sp-calendar-heading-trigger,
+    .sp-calendar-picker-previous,
+    .sp-calendar-picker-heading,
+    .sp-calendar-picker-next,
+    .sp-calendar-picker-option,
+    .sp-calendar-cell,
+    .sp-calendar-cell::after {
+      transition-duration: 1ms;
+    }
+
+    :is(
+        .sp-calendar-heading-motion,
+        .sp-calendar-month-motion,
+        .sp-calendar-picker-page,
+        .sp-calendar-picker-heading-motion
+      )[data-motion-state][data-direction] {
+      animation-duration: 1ms;
+    }
+  }
+
+  html[data-motion-reduce="true"] .sp-calendar-previous,
+  html[data-motion-reduce="true"] .sp-calendar-next,
+  html[data-motion-reduce="true"] .sp-calendar-heading-trigger,
+  html[data-motion-reduce="true"] .sp-calendar-picker-previous,
+  html[data-motion-reduce="true"] .sp-calendar-picker-heading,
+  html[data-motion-reduce="true"] .sp-calendar-picker-next,
+  html[data-motion-reduce="true"] .sp-calendar-picker-option,
+  html[data-motion-reduce="true"] .sp-calendar-cell,
+  html[data-motion-reduce="true"] .sp-calendar-cell::after,
+  [data-sp-motion="reduced"] .sp-calendar-previous,
+  [data-sp-motion="reduced"] .sp-calendar-next,
+  [data-sp-motion="reduced"] .sp-calendar-heading-trigger,
+  [data-sp-motion="reduced"] .sp-calendar-picker-previous,
+  [data-sp-motion="reduced"] .sp-calendar-picker-heading,
+  [data-sp-motion="reduced"] .sp-calendar-picker-next,
+  [data-sp-motion="reduced"] .sp-calendar-picker-option,
+  [data-sp-motion="reduced"] .sp-calendar-cell,
+  [data-sp-motion="reduced"] .sp-calendar-cell::after {
+    transition-duration: 1ms;
+  }
+
+  html[data-motion-reduce="true"]
+    :is(
+      .sp-calendar-heading-motion,
+      .sp-calendar-month-motion,
+      .sp-calendar-picker-page,
+      .sp-calendar-picker-heading-motion
+    )[data-motion-state][data-direction],
+  [data-sp-motion="reduced"]
+    :is(
+      .sp-calendar-heading-motion,
+      .sp-calendar-month-motion,
+      .sp-calendar-picker-page,
+      .sp-calendar-picker-heading-motion
+    )[data-motion-state][data-direction] {
+    animation-duration: 1ms;
+  }
+}

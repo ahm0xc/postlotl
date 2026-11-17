@@ -1,3 +1,5 @@
+import "@fontsource-variable/inter";
+import { UIProvider } from "@repo/ui/provider";
 import type { QueryClient } from "@tanstack/react-query";
 import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 
@@ -39,14 +41,16 @@ function RootComponent() {
 
   return (
     <TanstackQueryProvider queryClient={queryClient}>
-      <Outlet />
+      <UIProvider>
+        <Outlet />
+      </UIProvider>
     </TanstackQueryProvider>
   );
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="light">
       <head>
         <HeadContent />
       </head>

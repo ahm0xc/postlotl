@@ -1,0 +1,18 @@
+@layer theme, base, components, ui, utilities;
+
+@layer ui {
+  /* A date field takes the height, the insets and the segment row of every
+   * date and time field (input-group.css, "Date and time fields"), and its
+   * segments look as theirs do ("Date and time segments"). The field fills
+   * its container, like Input (Lukas, 31 October 2026); width="fit" makes it
+   * as wide as its segments, like the Date Time Picker. Its own: in the
+   * input-group profile, insetStart keeps 8 px before the day. */
+  .sp-base-date-field[data-profile="input-group"][data-inset-start="true"]
+    .sp-date-segment[data-type="day"] {
+    margin-inline-start: calc(var(--spacing) * 2);
+  }
+
+  .sp-date-field-popover {
+    --popup-width: auto;
+  }
+}

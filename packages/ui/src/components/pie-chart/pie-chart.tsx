@@ -1,0 +1,577 @@
+"use client";
+import * as React from "react";
+import {
+  useFormatLocale,
+  useUIMessages,
+} from "../../system/locale/messages-context";
+import { cn } from "../../system/utils/cn";
+import { slotClass } from "../../system/utils/slot-class";
+import { ChartEmptyState } from "../chart/chart-cartesian";
+import {
+  CHART_DEFAULT_LOCALE,
+  chartFigureFormatter,
+  chartLabels,
+  chartNumberFormatter,
+} from "../chart/chart-format";
+import { useChartInteraction } from "../chart/chart-interaction";
+import { ChartLegend, useChartSeriesFocus } from "../chart/chart-legend";
+import { chartEmptyColor, chartRingColors } from "../chart/chart-palette";
+import { ChartTooltip, chartTooltipText } from "../chart/chart-tooltip";
+import type { ChartLabels, ChartPalette } from "../chart/chart-types";
+import {
+  MotionNumber,
+  followed,
+  useFollowPoint,
+  useTweenedRows,
+} from "../motion";
+import {
+  DONUT_INNER_RADIUS,
+  PIE_BOX,
+  pieCenterFit,
+  popDistance,
+  popOffset,
+  ringOf,
+  ringPath,
+  shareAnchor,
+  shareAtPoint,
+  wedgePath,
+  type PieArc,
+  type PieCenterStep,
+} from "./pie-geometry";
+// A gap in the ring smaller than this, in percent of the circle, is the
+// rounding of shares that fill it: no track is drawn for it.
+const trackMinimum = 0.001;
+
+/**
+ * The named sizes of a ring, by the diameter
+ * of the chart: 120, 160, 200, 240 and 280 px. The default is `sm`, 200 px.
+ */
+export type PieChartSize = "xxs" | "xs" | "sm" | "md" | "lg";
+const pieChartSizes: Record<PieChartSize, number> = {
+  xxs: 120,
+  xs: 160,
+  sm: 200,
+  md: 240,
+  lg: 280,
+};
+
+export type PieChartDatum = {
+  id: string;
+  label: string;
+  value: number;
+  color?: string;
+  /**
+   * An unfilled share, such as unused capacity. It takes the neutral empty
+   * colour instead of a series colour.
+   */
+  empty?: boolean;
+};
+export type PieChartProps = {
+  data: readonly PieChartDatum[];
+  label: string;
+  /**
+   * The id of an element that describes the chart, read after what the chart
+   * gives assistive technology itself.
+   */
+  "aria-describedby"?: string;
+  /**
+   * `brand` (the default) shades the brand colour from strong to light, spread
+   * over the number of shares (up to eight), for parts of one whole.
+   * `categorical` gives each share its own chart colour, `--chart-1` to
+   * `--chart-8` in order. Both start over from the ninth share. A share that
+   * names its `color` keeps it, and an `empty` share is always neutral. The
+   * last share never takes the color of the first, where the ring closes.
+   */
+  palette?: ChartPalette;
+  /**
+   * The diameter of the chart, a size name (`xxs` 120 px to `lg` 280 px) or a
+   * number of px. The default is `sm`, 200 px.
+   */
+  size?: number | PieChartSize;
+  className?: string;
+  /** Writes a value in the tooltip and in what screen readers read for each share. A number in the format of `locale` by default. */
+  formatValue?: (value: number) => string;
+  /** The locale of the numbers: the LocaleProvider's unless set, en-US without one. */
+  locale?: string;
+  emptyLabel?: string;
+  /**
+   * Replaces words that the chart gives screen readers, merged with the
+   * English defaults: its role description and the keyboard hint.
+   */
+  labels?: Partial<ChartLabels> | undefined;
+  /**
+   * `donut` draws the shares as a ring. `pie` fills the whole disc with a wedge
+   * per share, so it has no hole.
+   */
+  variant?: "donut" | "pie";
+  /**
+   * Content of your own in the hole of the donut, in place of `centerValue`
+   * and `centerLabel`. It is laid out in the square around the hole and cut
+   * off at the hole's edge, so it never covers the ring: keep it short, or pass
+   * the figure as `centerValue`, which the chart fits. A pie has no hole and
+   * shows none, and a chart with nothing to draw shows `emptyLabel` in its
+   * place. It lies over the ring without taking the pointer and is not part of
+   * the chart's accessible name.
+   */
+  center?: React.ReactNode;
+  /**
+   * A figure in the hole of the donut, such as the total of the shares, which
+   * the chart fits into the hole: in the largest text step it fits in, from 30
+   * px down, and in compact notation, such as 1.2M, when it does not fit in
+   * full at 20 px. Screen readers read it in full. It rolls to a new value.
+   */
+  centerValue?: number;
+  /** A caption above `centerValue`, such as Tickets, as in every ring chart: one line of 12 px muted text, 4 px above the figure, that ends in an ellipsis when the hole is too narrow for it. */
+  centerLabel?: string;
+  /** How `centerValue` is written, as Intl.NumberFormat options in `locale`, such as a currency. The chart adds compact notation when the figure needs it. */
+  centerFormat?: Intl.NumberFormatOptions;
+  /**
+   * Lists the shares beside the ring, each with its colour. Without it screen
+   * readers still read each share and its value, as the description of the
+   * chart.
+   */
+  legend?: boolean;
+  /**
+   * Lets the highlighted share step out of the ring, 10 px along its middle
+   * angle at any size, and lets a mouse over an entry of the legend highlight
+   * its share as well. Off by default: no share ever moves, and the legend does
+   * not react to the mouse. No share fades either way. A share that steps out
+   * reaches up to 10 px beyond the box of the chart.
+   */
+  popOut?: boolean;
+  /**
+   * Rolls the value in the tooltip to the next share's, digit by digit
+   * (MotionNumber), as the other charts' `rollingNumbers` does. Off by
+   * default: it changes at once. `centerValue` rolls either way.
+   */
+  rollingNumbers?: boolean;
+};
+/**
+ * One share of the ring, or one wedge of the pie. While it is the highlighted
+ * share it steps out along its middle angle, and it goes back in when it is not;
+ * a chart that does not pop out gives it no distance to step, so it stays. It
+ * moves with the follow motion, which owns the glide, its token and reduced
+ * motion (rulebook M5): the translate is a pair of motion values bound to the
+ * path, so only the path moves, and the chart does not render again. No share
+ * fades: the shares are shades of one hue, and a faded share took the colour of
+ * another one.
+ */
+function PieSegment({
+  arc,
+  color,
+  container,
+  highlighted,
+  pie,
+  popUnits,
+  ring,
+}: {
+  arc: PieArc;
+  color: string;
+  /** The element whose motion tokens set the glide: the chart. */
+  container: React.RefObject<Element | null>;
+  /** This share is the highlighted one. */
+  highlighted: boolean;
+  /** A wedge of a pie, not a share of the ring. */
+  pie: boolean;
+  /** How far the highlighted share steps out, in the units of the box. */
+  popUnits: number;
+  ring: { radius: number; width: number };
+}): React.ReactElement | null {
+  const out = useFollowPoint(
+    highlighted ? popOffset(arc.start, arc.value, popUnits) : { x: 0, y: 0 },
+    { container },
+  );
+  if (pie)
+    // A wedge is a path of its own, so that neighbours meet along exact edges;
+    // dashes of a stroke as wide as the disc would meet a little off.
+    return arc.value > 0 ? (
+      <followed.path
+        d={wedgePath(arc.start, arc.value)}
+        fill={color}
+        data-active={highlighted ? "" : undefined}
+        style={{ x: out.x, y: out.y }}
+      />
+    ) : null;
+  // The share is a dash along the open path of the ring.
+  return (
+    <followed.path
+      d={ringPath(ring.radius)}
+      fill="none"
+      stroke={color}
+      strokeWidth={ring.width}
+      pathLength="100"
+      strokeDasharray={`${arc.value} ${100 - arc.value}`}
+      strokeDashoffset={-arc.start}
+      data-active={highlighted ? "" : undefined}
+      style={{ x: out.x, y: out.y }}
+    />
+  );
+}
+
+// The text classes of the steps of a figure in the hole, written whole for
+// Tailwind: the kit's 30 px figure (the Metric Card's), then the smaller steps.
+const figureStepClassName: Record<PieCenterStep, string> = {
+  12: "text-xs",
+  14: "text-sm",
+  16: "text-base",
+  20: "text-xl",
+  24: "text-2xl",
+  30: "text-3xl",
+};
+
+/**
+ * A figure in the hole of the donut, with an optional caption above it, as in
+ * every ring chart of the kit (Lukas, 3 November 2026): in the largest step it
+ * fits in, in full or in compact notation (`pieCenterFit`), which the chart
+ * picks from its size and the text alone, so that the server and the client
+ * agree. A compact figure is read in full. The caption stays on one line and
+ * ends in an ellipsis where the hole narrows (rulebook K5).
+ */
+function PieCenterFigure({
+  caption,
+  format,
+  locale,
+  size,
+  value,
+}: {
+  caption: string | undefined;
+  format: Intl.NumberFormatOptions | undefined;
+  locale: string;
+  size: number;
+  value: number;
+}): React.ReactElement {
+  const full = chartFigureFormatter(locale, format)(value);
+  const short = chartFigureFormatter(locale, format, true)(value);
+  const fit = pieCenterFit({ caption, chartSize: size, compact: short, full });
+  const text = fit.compact ? short : full;
+  return (
+    <>
+      {caption ? (
+        <span
+          className={cn(
+            slotClass("pie-chart-center-label"),
+            "mb-1 truncate text-xs leading-none text-muted-foreground",
+          )}
+          data-slot="pie-chart-center-label"
+          style={{ maxWidth: `${fit.captionWidth}%` }}
+          title={caption}
+        >
+          {caption}
+        </span>
+      ) : null}
+      <span
+        className={cn(
+          slotClass("pie-chart-center-value"),
+          "max-w-full font-(--sp-rw-font-weight-strong) tabular-nums",
+          figureStepClassName[fit.size],
+          // After the step, which sets a line height of its own.
+          "leading-none",
+        )}
+        data-compact={fit.compact ? "" : undefined}
+        data-size={fit.size}
+        data-slot="pie-chart-center-value"
+      >
+        {text === full ? (
+          <MotionNumber value={text} />
+        ) : (
+          <>
+            <span className="sr-only">{full}</span>
+            <MotionNumber aria-hidden="true" value={text} />
+          </>
+        )}
+      </span>
+    </>
+  );
+}
+
+export function PieChart({
+  data,
+  label,
+  "aria-describedby": describedBy,
+  palette = "brand",
+  size: sizeProp = "sm",
+  className,
+  formatValue: givenFormat,
+  locale: localeProp,
+  emptyLabel: emptyLabelProp,
+  labels,
+  variant = "donut",
+  center,
+  centerValue,
+  centerLabel,
+  centerFormat,
+  legend = true,
+  popOut = false,
+  rollingNumbers = false,
+}: PieChartProps): React.ReactElement {
+  const messages = useUIMessages("chart");
+  const emptyLabel = emptyLabelProp ?? messages.noData;
+  // The chart's own locale, else the provider's, else en-US.
+  const locale = useFormatLocale(localeProp, CHART_DEFAULT_LOCALE);
+  const chart = React.useRef<SVGSVGElement>(null);
+  const size =
+    typeof sizeProp === "number" ? sizeProp : pieChartSizes[sizeProp];
+  const words = chartLabels(labels, messages);
+  // Numbers as the other charts write them: in the format of the locale.
+  const formatValue = givenFormat ?? chartNumberFormatter(locale);
+  const pie = variant === "pie";
+  // A pie is a ring with no hole: it reaches in to the centre.
+  const innerRadius = pie ? 0 : DONUT_INNER_RADIUS;
+  const ring = ringOf(innerRadius);
+  // The palette is spread over the shares that are filled: an empty share is
+  // neutral and takes no place in it. The last share and the first meet where
+  // the ring closes, so they never share a colour.
+  const colors = chartRingColors(
+    palette,
+    data.filter((item) => !item.empty).length,
+  );
+  // The palette index counts the filled shares in a plain loop, which runs
+  // while the chart renders.
+  const rows: Array<
+    Omit<PieChartDatum, "color" | "value"> & { color: string; value: number }
+  > = [];
+  let series = 0;
+  for (const item of data) {
+    const index = item.empty ? -1 : series++;
+    rows.push({
+      ...item,
+      value: Number.isFinite(item.value) ? Math.max(0, item.value) : 0,
+      color: item.color ?? (item.empty ? chartEmptyColor : colors[index]!),
+    });
+  }
+  const total = rows.reduce((sum, row) => sum + row.value, 0);
+  // The ring as it is drawn now, in percent of the circle: when the data
+  // changes, each share glides to its new size and place, a new share grows
+  // from nothing and a share that is gone shrinks away. At rest this is the
+  // data itself.
+  const arcs = useTweenedRows(
+    rows,
+    (row) => (total > 0 ? (row.value / total) * 100 : 0),
+    { container: chart },
+  );
+  const drawn: Array<(typeof arcs)[number] & { start: number }> = [];
+  let offset = 0;
+  for (const arc of arcs) {
+    drawn.push({ ...arc, start: offset });
+    offset += arc.value;
+  }
+  // The part of the circle that no share fills, which the track shows: all of
+  // it in a chart with nothing in it, the gap while shares grow from nothing or
+  // shrink to it, and none at rest, where the shares fill the circle.
+  const filled = Math.min(100, Math.max(0, offset));
+  const unfilled = 100 - filled;
+  // The share under a point, from its angle within the ring or the disc. One
+  // lookup for the whole chart keeps the active share steady while the pointer
+  // crosses from one share to the next.
+  const segmentAt = (clientX: number, clientY: number): string | null => {
+    const box = chart.current?.getBoundingClientRect();
+    if (!box || !box.width || total <= 0) return null;
+    const scale = PIE_BOX / box.width;
+    return shareAtPoint(
+      drawn,
+      (clientX - box.x - box.width / 2) * scale,
+      (clientY - box.y - box.height / 2) * scale,
+      innerRadius,
+    );
+  };
+  // The chart core keeps the active share, the pointer, the tap that pins, the
+  // arrow keys and the tooltip; the ring only says which share is under a point.
+  // A ring with nothing in it has no share to show: no tooltip, no focus stop.
+  const interaction = useChartInteraction({
+    keys: total > 0 ? rows.map((row) => row.id) : [],
+    itemAt: segmentAt,
+    wrap: true,
+  });
+  const selected =
+    interaction.activeKey === null
+      ? undefined
+      : rows.find((row) => row.id === interaction.activeKey);
+  // The share whose entry the mouse is over in the legend. The chart owns it,
+  // as it owns the active share: one state, handed to the legend and the ring.
+  // The legend sets it only in a chart that pops out, where it has something to
+  // show.
+  const focus = useChartSeriesFocus(rows.map((row) => row.id));
+  // One share is highlighted, which steps out with `popOut`: the share under
+  // the pointer, the one a tap or the keyboard has made active, or, in a chart
+  // that pops out, the one whose entry the mouse is over in the legend. The
+  // mouse on the legend wins, and the tooltip stays with the plot's own share.
+  // Nothing fades in a Pie Chart.
+  const highlightedKey =
+    (popOut ? focus.focusedKey : null) ?? interaction.activeKey;
+  // How far the highlighted share steps out, in the units of the box: none
+  // unless the chart pops out, so nothing moves, whatever highlights a share.
+  const popUnits = popOut ? popDistance(size) : 0;
+  // The card sits beside the middle of the share, where it stands: stepped out
+  // while it is the highlighted one and the chart pops out.
+  const anchorFor = (key: string) => {
+    const arc = drawn.find((item) => item.key === key);
+    const box = chart.current?.getBoundingClientRect();
+    if (!arc || total <= 0 || !box) return null;
+    const point = shareAnchor(
+      arc.start,
+      arc.value,
+      innerRadius,
+      key === highlightedKey
+        ? popOffset(arc.start, arc.value, popUnits)
+        : undefined,
+    );
+    return {
+      x: box.x + box.width * point.x,
+      y: box.y + box.height * point.y,
+    };
+  };
+  // What the chart says about its shares to assistive technology when it takes
+  // focus: its empty label when there is nothing in the ring, and without a
+  // legend each share and its value, which the legend reads out otherwise.
+  const description =
+    total <= 0
+      ? emptyLabel
+      : legend
+        ? undefined
+        : // A full stop ends it, so that the keyboard hint after it is heard
+          // as a sentence of its own.
+          `${rows.map((row) => `${row.label}: ${formatValue(row.value)}`).join("; ")}.`;
+  return (
+    // The figure holds the ring and the legend. The focus stop inside is the
+    // chart for assistive technology, named by the label alone.
+    <figure
+      data-slot="pie-chart"
+      className={cn(
+        // A legend without rows keeps no gap beside the ring (rulebook S11).
+        // It stays mounted, so its rows still enter and leave with motion.
+        "sp-pie-chart",
+        "flex max-w-full flex-wrap items-start justify-center gap-5 [&:not(:has([data-slot=chart-legend]_li))]:gap-0",
+        className,
+      )}
+    >
+      <ChartTooltip
+        // The ring fills its box, so the card has room beside a share only
+        // outside the chart: it stays inside the window instead.
+        align="center"
+        boundary="viewport"
+        interaction={interaction}
+        label={label}
+        anchorFor={anchorFor}
+        content={
+          selected && (
+            <>
+              <strong className="tabular-nums">
+                {rollingNumbers ? (
+                  <MotionNumber value={formatValue(selected.value)} />
+                ) : (
+                  formatValue(selected.value)
+                )}
+              </strong>
+              <div>{selected.label}</div>
+            </>
+          )
+        }
+        announcement={
+          selected
+            ? chartTooltipText(undefined, [
+                { label: selected.label, value: formatValue(selected.value) },
+              ])
+            : undefined
+        }
+        description={description}
+        describedBy={describedBy}
+        keyboardHint={words.keyboardHint}
+        roleDescription={words.roleDescription}
+        className="relative max-w-full rounded-full"
+        style={{ width: size, height: size }}
+      >
+        {/* The ring keeps its size at rest and the box is as tight as it was:
+            a share that steps out is drawn outside it, so a chart that pops
+            out must not have its SVG clip it. It is a picture that the focus
+            stop describes, so it is hidden from assistive technology. */}
+        <svg
+          ref={chart}
+          viewBox={`0 0 ${PIE_BOX} ${PIE_BOX}`}
+          className={cn("size-full", popOut && "overflow-visible")}
+          aria-hidden="true"
+        >
+          {/* No SVG titles: the browser would show its own tooltip next to
+              the chart's. The label names the chart; the legend and the
+              tooltip carry the values. The track is the part of the ring
+              that no share fills, in the neutral of an empty share. It lies
+              beside the shares, never under them, so that their edges and a
+              share that steps out show the surface behind the chart. */}
+          {unfilled > trackMinimum &&
+            (pie ? (
+              <path
+                d={wedgePath(filled, unfilled)}
+                className="sp-pie-chart-track"
+                data-slot="pie-chart-track"
+                fill={chartEmptyColor}
+              />
+            ) : (
+              <path
+                d={ringPath(ring.radius)}
+                className="sp-pie-chart-track"
+                data-slot="pie-chart-track"
+                fill="none"
+                pathLength="100"
+                stroke={chartEmptyColor}
+                strokeDasharray={`${unfilled} ${100 - unfilled}`}
+                strokeDashoffset={-filled}
+                strokeWidth={ring.width}
+              />
+            ))}
+          {drawn.some((arc) => arc.value > 0) &&
+            drawn.map((arc) => (
+              <PieSegment
+                arc={arc}
+                color={arc.row.color}
+                container={chart}
+                highlighted={highlightedKey === arc.key}
+                key={arc.key}
+                pie={pie}
+                popUnits={popUnits}
+                ring={ring}
+              />
+            ))}
+        </svg>
+        {/* The empty label is the charts' own empty state, in HTML over the
+            ring, so that it keeps its 14 px at any size of the chart. */}
+        {total <= 0 && <ChartEmptyState label={emptyLabel} />}
+        {/* The centre is HTML over the plot, in the hole, which is half the
+            width of the chart: the square around the hole, cut off at its
+            round edge, so that nothing in it covers the ring. It sits inside
+            the focus stop, whose name is the label alone, and never takes the
+            pointer, so the lookup of the ring sees every point of the hole. A
+            chart with nothing to draw shows its empty label there instead. */}
+        {!pie &&
+          total > 0 &&
+          (center != null ||
+            (centerValue !== undefined && Number.isFinite(centerValue))) && (
+            <div
+              data-slot="pie-chart-center"
+              className="sp-pie-chart-center pointer-events-none absolute inset-1/4 flex flex-col items-center justify-center overflow-hidden rounded-full text-center"
+            >
+              {center ?? (
+                <PieCenterFigure
+                  caption={centerLabel}
+                  format={centerFormat}
+                  locale={locale}
+                  size={size}
+                  value={centerValue!}
+                />
+              )}
+            </div>
+          )}
+      </ChartTooltip>
+      {legend && (
+        <ChartLegend
+          fade={false}
+          {...(popOut ? { focus } : {})}
+          items={rows.map((row) => ({
+            key: row.id,
+            label: row.label,
+            color: row.color,
+            value: formatValue(row.value),
+          }))}
+        />
+      )}
+    </figure>
+  );
+}

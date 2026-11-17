@@ -1,6 +1,14 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "ignorePatterns": ["**/dist/**", "**/node_modules/**", "**/.wrangler/**", "**/.tanstack/**", "**/routeTree.gen.ts"],
+  "ignorePatterns": [
+    "**/dist/**",
+    "**/node_modules/**",
+    "**/.wrangler/**",
+    "**/.tanstack/**",
+    "**/routeTree.gen.ts",
+    "packages/ui/src/components/**",
+    "packages/ui/src/system/**"
+  ],
   "singleQuote": false,
   "semi": true,
   "sortImports": true,
