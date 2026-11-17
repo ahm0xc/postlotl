@@ -8,80 +8,207 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from "./routes/__root";
-import { Route as ApiHealthRouteImport } from "./routes/api/health";
-import { Route as IndexRouteImport } from "./routes/index";
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as AuthRouteImport } from './routes/_auth'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AuthLoginRouteImport } from './routes/_auth/login'
+import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
-const IndexRoute = IndexRouteImport.update({
-  id: "/",
-  path: "/",
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/_auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AuthLoginRoute = AuthLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthSignupRoute = AuthSignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => AuthRoute,
+} as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
-  id: "/api/health",
-  path: "/api/health",
+  id: '/api/health',
+  path: '/api/health',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
-  "/": typeof IndexRoute;
-  "/api/health": typeof ApiHealthRoute;
+  '/': typeof AppIndexRoute
+  '/onboarding': typeof OnboardingRoute
+  '/login': typeof AuthLoginRoute
+  '/signup': typeof AuthSignupRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
-  "/": typeof IndexRoute;
-  "/api/health": typeof ApiHealthRoute;
+  '/': typeof AppIndexRoute
+  '/onboarding': typeof OnboardingRoute
+  '/login': typeof AuthLoginRoute
+  '/signup': typeof AuthSignupRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport;
-  "/": typeof IndexRoute;
-  "/api/health": typeof ApiHealthRoute;
+  __root__: typeof rootRouteImport
+  '/_app': typeof AppRouteWithChildren
+  '/_auth': typeof AuthRouteWithChildren
+  '/onboarding': typeof OnboardingRoute
+  '/_auth/login': typeof AuthLoginRoute
+  '/_auth/signup': typeof AuthSignupRoute
+  '/api/health': typeof ApiHealthRoute
+  '/_app/': typeof AppIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: "/" | "/api/health";
-  fileRoutesByTo: FileRoutesByTo;
-  to: "/" | "/api/health";
-  id: "__root__" | "/" | "/api/health";
-  fileRoutesById: FileRoutesById;
+  fileRoutesByFullPath: FileRoutesByFullPath
+  fullPaths:
+    '/' | '/onboarding' | '/login' | '/signup' | '/api/health' | '/api/auth/$'
+  fileRoutesByTo: FileRoutesByTo
+  to: '/' | '/onboarding' | '/login' | '/signup' | '/api/health' | '/api/auth/$'
+  id:
+    | '__root__'
+    | '/_app'
+    | '/_auth'
+    | '/onboarding'
+    | '/_auth/login'
+    | '/_auth/signup'
+    | '/api/health'
+    | '/_app/'
+    | '/api/auth/$'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute;
-  ApiHealthRoute: typeof ApiHealthRoute;
+  AppRoute: typeof AppRouteWithChildren
+  AuthRoute: typeof AuthRouteWithChildren
+  OnboardingRoute: typeof OnboardingRoute
+  ApiHealthRoute: typeof ApiHealthRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    "/": {
-      id: "/";
-      path: "/";
-      fullPath: "/";
-      preLoaderRoute: typeof IndexRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/health": {
-      id: "/api/health";
-      path: "/api/health";
-      fullPath: "/api/health";
-      preLoaderRoute: typeof ApiHealthRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/': {
+      id: '/_app/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_auth/login': {
+      id: '/_auth/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/signup': {
+      id: '/_auth/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof AuthSignupRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
+interface AuthRouteChildren {
+  AuthLoginRoute: typeof AuthLoginRoute
+  AuthSignupRoute: typeof AuthSignupRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthLoginRoute: AuthLoginRoute,
+  AuthSignupRoute: AuthSignupRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  AuthRoute: AuthRouteWithChildren,
+  OnboardingRoute: OnboardingRoute,
   ApiHealthRoute: ApiHealthRoute,
-};
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()
 
-import type { createStart } from "@tanstack/react-start";
-
-import type { getRouter } from "./router.tsx";
-declare module "@tanstack/react-start" {
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
   interface Register {
-    ssr: true;
-    router: Awaited<ReturnType<typeof getRouter>>;
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
   }
 }

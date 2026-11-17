@@ -5,7 +5,7 @@ import { z } from "zod";
 
 if (process.env.NODE_ENV !== "production") {
   config({
-    path: fileURLToPath(new URL("../../../.env", import.meta.url)),
+    path: fileURLToPath(new URL("../../.env", import.meta.url)),
     quiet: true,
   });
 }
@@ -17,6 +17,8 @@ export const EnvSchema = z.object({
   POSTGRES_HOST: z.string().min(1),
   POSTGRES_PORT: z.string().min(1),
   POSTGRES_DB: z.string().min(1),
+  BETTER_AUTH_SECRET: z.string().min(32),
+  BETTER_AUTH_URL: z.url(),
 });
 
 const uncomputedEnv = EnvSchema.parse(process.env);

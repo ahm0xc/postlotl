@@ -9,6 +9,6 @@
     "builtin": true,
     "node": true
   },
-  "ignorePatterns": ["**/dist/**", "**/node_modules/**", "**/.wrangler/**", "**/.tanstack/**"],
+  "ignorePatterns": ["**/dist/**", "**/node_modules/**", "**/.wrangler/**", "**/.tanstack/**", "**/routeTree.gen.ts"],
   "rules": {}
 }
