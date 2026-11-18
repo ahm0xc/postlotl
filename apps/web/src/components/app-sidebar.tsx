@@ -65,6 +65,10 @@ function asIcon(Icon: PhosphorGlyph): IconComponent {
   };
 }
 
+function avatarUrl(userId: string) {
+  return `https://api.dicebear.com/10.x/clay/svg?topProbability=0&patternProbability=0&seed=${encodeURIComponent(userId)}`;
+}
+
 const navigationItems = [
   { label: "Home", icon: asIcon(House), to: "/project/$projectSlug" },
   { label: "Activity", icon: asIcon(Pulse), to: "/project/$projectSlug/activity" },
@@ -221,8 +225,15 @@ export function AppSidebar() {
             <DropdownMenu>
               <DropdownTrigger
                 render={
-                  <Button className="w-full justify-start" variant="ghost" leadingIcon={cubeIcon}>
-                    {user.name || user.email}
+                  <Button className="w-full justify-start pl-2" variant="ghost">
+                    <span className="flex min-w-0 items-center gap-2">
+                      <img
+                        alt=""
+                        className="size-6 shrink-0 rounded-full"
+                        src={avatarUrl(user.id)}
+                      />
+                      <span className="truncate">{user.name || user.email}</span>
+                    </span>
                   </Button>
                 }
               />
