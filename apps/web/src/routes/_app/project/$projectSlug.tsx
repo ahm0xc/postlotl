@@ -1,10 +1,6 @@
-import {
-  DashboardShell,
-  DashboardShellInset,
-  DashboardShellMain,
-} from "@repo/ui/components/dashboard-shell";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "~/components/app-sidebar";
 
 export const Route = createFileRoute("/_app/project/$projectSlug")({
@@ -13,13 +9,16 @@ export const Route = createFileRoute("/_app/project/$projectSlug")({
 
 function ProjectLayout() {
   return (
-    <DashboardShell>
+    <SidebarProvider defaultOpen>
       <AppSidebar />
-      <DashboardShellInset>
-        <DashboardShellMain>
+      <SidebarInset>
+        <header className="border-border flex h-12 items-center gap-2 border-b px-4">
+          <SidebarTrigger />
+        </header>
+        <main className="p-6">
           <Outlet />
-        </DashboardShellMain>
-      </DashboardShellInset>
-    </DashboardShell>
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

@@ -1,7 +1,7 @@
-import { Card, CardHeader, CardPanel, CardTitle } from "@repo/ui/components/card";
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateProjectForm } from "~/components/create-project-form";
 import { authClient } from "~/lib/auth-client";
 import { createProject, getOrganizationProjects } from "~/server/projects";
@@ -33,15 +33,15 @@ function OrganizationPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-      <h1 className="text-2xl font-semibold">{organization.name}</h1>
+      <h1 className="text-display font-medium">{organization.name}</h1>
       {projects.length === 0 ? (
         <Card>
           <CardHeader>
             <CardTitle>Create your first project</CardTitle>
           </CardHeader>
-          <CardPanel>
+          <CardContent>
             <CreateProjectForm onCreate={handleCreateProject} />
-          </CardPanel>
+          </CardContent>
         </Card>
       ) : (
         <ul className="grid gap-3">

@@ -1,14 +1,13 @@
-import { Button } from "@repo/ui/components/button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogClose,
+  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogPanel,
-  DialogPopup,
   DialogTitle,
-} from "@repo/ui/components/dialog";
-import { Form } from "@repo/ui/components/form";
+} from "@/components/ui/dialog";
 
 import { CreateProjectFields, useCreateProjectSubmit } from "./create-project-form";
 
@@ -25,22 +24,29 @@ export function CreateProjectDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogPopup>
-        <Form onSubmit={onSubmit}>
+      <DialogContent>
+        <form onSubmit={onSubmit}>
           <DialogHeader>
             <DialogTitle>Create new project</DialogTitle>
             <DialogDescription>Projects group the work of your organization.</DialogDescription>
           </DialogHeader>
-          <DialogPanel className="grid gap-4">
+          <div className="grid gap-4 py-4">
             <CreateProjectFields error={error} />
-          </DialogPanel>
+          </div>
           <DialogFooter>
+            <DialogClose
+              render={
+                <Button type="button" variant="ghost">
+                  Cancel
+                </Button>
+              }
+            />
             <Button type="submit" loading={pending}>
               Create project
             </Button>
           </DialogFooter>
-        </Form>
-      </DialogPopup>
+        </form>
+      </DialogContent>
     </Dialog>
   );
 }

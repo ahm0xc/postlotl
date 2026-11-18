@@ -1,80 +1,85 @@
 import {
-  ChartLineUpIcon,
-  EnvelopeSimpleIcon,
-  FlagIcon,
-  GearSixIcon,
-  HouseIcon,
-  PlusIcon,
-  PulseIcon,
-  RobotIcon,
-  UserPlusIcon,
-  UsersIcon,
-  VideoCameraIcon,
+  Buildings,
+  ChartLineUp,
+  Check,
+  Flag,
+  House,
+  Plus,
+  Pulse,
+  Robot,
+  SignOut,
+  Users,
+  VideoCamera,
 } from "@phosphor-icons/react/dist/ssr";
-import { Avatar, AvatarFallback } from "@repo/ui/components/avatar";
-import {
-  DashboardShellSidebar,
-  DashboardShellSidebarHeader,
-} from "@repo/ui/components/dashboard-shell";
-import {
-  Menu,
-  MenuGroup,
-  MenuGroupLabel,
-  MenuItem,
-  MenuPopup,
-  MenuRadioGroup,
-  MenuRadioItem,
-  MenuSeparator,
-  MenuSub,
-  MenuSubPopup,
-  MenuSubTrigger,
-  MenuTrigger,
-} from "@repo/ui/components/menu";
-import {
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuButtonText,
-  SidebarMenuButtonTitle,
-  SidebarMenuChevron,
-  SidebarMenuItem,
-  useSidebar,
-} from "@repo/ui/components/sidebar";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useMatchRoute, useNavigate, useParams } from "@tanstack/react-router";
+import type { ComponentType } from "react";
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import {
+  DropdownContent,
+  DropdownLabel,
+  DropdownMenu,
+  DropdownSeparator,
+  DropdownTrigger,
+} from "@/components/ui/dropdown";
+import { MenuItem } from "@/components/ui/menu-item";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
+import type { IconComponent } from "@/lib/icon-context";
 import { authClient } from "~/lib/auth-client";
 import { useSwitchOrganization } from "~/lib/organization";
 import { createProject, listProjects } from "~/server/projects";
 
 import { CreateProjectDialog } from "./create-project-dialog";
 
-const navigationItems = [
-  { label: "Home", icon: HouseIcon, to: "/project/$projectSlug" },
-  { label: "Activity", icon: PulseIcon, to: "/project/$projectSlug/activity" },
-  { label: "People", icon: UsersIcon, to: "/project/$projectSlug/people" },
-  { label: "Feature flags", icon: FlagIcon, to: "/project/$projectSlug/feature-flags" },
-  { label: "Web analytics", icon: ChartLineUpIcon, to: "/project/$projectSlug/web-analytics" },
-  { label: "AI observability", icon: RobotIcon, to: "/project/$projectSlug/ai-observability" },
-  { label: "Replay vision", icon: VideoCameraIcon, to: "/project/$projectSlug/replay-vision" },
-] as const;
+type PhosphorGlyph = ComponentType<{
+  size?: number;
+  weight?: "light" | "regular";
+  className?: string;
+}>;
 
-function initialsOf(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
+function asIcon(Icon: PhosphorGlyph): IconComponent {
+  return function AppIcon({ size, strokeWidth, className }) {
+    return (
+      <Icon
+        className={className}
+        size={size}
+        weight={strokeWidth !== undefined && strokeWidth >= 1.75 ? "regular" : "light"}
+      />
+    );
+  };
 }
 
+const navigationItems = [
+  { label: "Home", icon: asIcon(House), to: "/project/$projectSlug" },
+  { label: "Activity", icon: asIcon(Pulse), to: "/project/$projectSlug/activity" },
+  { label: "People", icon: asIcon(Users), to: "/project/$projectSlug/people" },
+  { label: "Feature flags", icon: asIcon(Flag), to: "/project/$projectSlug/feature-flags" },
+  { label: "Web analytics", icon: asIcon(ChartLineUp), to: "/project/$projectSlug/web-analytics" },
+  { label: "AI observability", icon: asIcon(Robot), to: "/project/$projectSlug/ai-observability" },
+  { label: "Replay vision", icon: asIcon(VideoCamera), to: "/project/$projectSlug/replay-vision" },
+] satisfies { label: string; icon: IconComponent; to: string }[];
+
+const cubeIcon = asIcon(Buildings);
+const plusIcon = asIcon(Plus);
+const checkIcon = asIcon(Check);
+const signOutIcon = asIcon(SignOut);
+
 export function AppSidebar() {
-  const { isMobile } = useSidebar();
   const queryClient = useQueryClient();
+  const { data: session } = authClient.useSession();
   const { data: organizations } = authClient.useListOrganizations();
   const { data: activeOrganization } = authClient.useActiveOrganization();
   const navigate = useNavigate();
@@ -104,127 +109,90 @@ export function AppSidebar() {
     await openProject(project.slug);
   }
 
+  async function handleSignOut() {
+    await authClient.signOut();
+    await navigate({ to: "/login" });
+  }
+
+  const user = session?.user;
+
   return (
-    <DashboardShellSidebar collapsible="none">
-      <DashboardShellSidebarHeader className="h-auto py-2">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <Menu>
-              <MenuTrigger
-                aria-label="Project menu"
-                render={<SidebarMenuButton size="xl" type="button" />}
-              >
-                <Avatar aria-hidden="true" shape="square" size="sm">
-                  <AvatarFallback>{initialsOf(currentProject?.name ?? "P")}</AvatarFallback>
-                </Avatar>
-                <SidebarMenuButtonText>
-                  <SidebarMenuButtonTitle>
-                    {currentProject?.name ?? "No project"}
-                  </SidebarMenuButtonTitle>
-                </SidebarMenuButtonText>
-                <SidebarMenuChevron variant="switcher" />
-              </MenuTrigger>
-              <MenuPopup
-                align="start"
-                side={isMobile ? "top" : "inline-end"}
-                sideOffset={8}
-                width="at-least-trigger"
-              >
-                <MenuSub>
-                  <MenuSubTrigger>
-                    <Avatar aria-hidden="true" shape="square" size="xs">
-                      <AvatarFallback>{initialsOf(currentProject?.name ?? "P")}</AvatarFallback>
-                    </Avatar>
-                    {currentProject?.name ?? "No project"}
-                  </MenuSubTrigger>
-                  <MenuSubPopup>
-                    <MenuRadioGroup
-                      value={currentProject?.slug}
-                      onValueChange={(value) => openProject(String(value))}
-                    >
-                      {projects.map((project) => (
-                        <MenuRadioItem
-                          disabled={project.slug === currentProject?.slug}
-                          key={project.id}
-                          value={project.slug}
-                        >
-                          <Avatar aria-hidden="true" shape="square" size="xs">
-                            <AvatarFallback>{initialsOf(project.name)}</AvatarFallback>
-                          </Avatar>
-                          {project.name}
-                        </MenuRadioItem>
-                      ))}
-                    </MenuRadioGroup>
-                  </MenuSubPopup>
-                </MenuSub>
-                <MenuItem>
-                  <UserPlusIcon aria-hidden="true" />
-                  Invite member
-                </MenuItem>
-                <MenuItem>
-                  <GearSixIcon aria-hidden="true" />
-                  Project settings
-                </MenuItem>
-                <MenuSeparator />
-                <MenuItem onClick={() => setCreateOpen(true)}>
-                  <PlusIcon aria-hidden="true" />
-                  Create new project
-                </MenuItem>
-                <MenuSeparator />
-                <MenuGroup>
-                  <MenuGroupLabel>Organizations</MenuGroupLabel>
-                  <MenuSub>
-                    <MenuSubTrigger>
-                      <Avatar aria-hidden="true" shape="square" size="xs">
-                        <AvatarFallback>
-                          {initialsOf(activeOrganization?.name ?? "O")}
-                        </AvatarFallback>
-                      </Avatar>
-                      {activeOrganization?.name ?? "No organization"}
-                    </MenuSubTrigger>
-                    <MenuSubPopup>
-                      <MenuRadioGroup
-                        value={activeOrganization?.id}
-                        onValueChange={(value) => switchOrganization(String(value))}
-                      >
-                        {(organizations ?? []).map((organization) => (
-                          <MenuRadioItem key={organization.id} value={organization.id}>
-                            <Avatar aria-hidden="true" shape="square" size="xs">
-                              <AvatarFallback>{initialsOf(organization.name)}</AvatarFallback>
-                            </Avatar>
-                            {organization.name}
-                          </MenuRadioItem>
-                        ))}
-                      </MenuRadioGroup>
-                    </MenuSubPopup>
-                  </MenuSub>
-                  <MenuItem>
-                    <EnvelopeSimpleIcon aria-hidden="true" />
-                    Invite to organization
-                  </MenuItem>
-                  <MenuItem>
-                    <GearSixIcon aria-hidden="true" />
-                    Organization settings
-                  </MenuItem>
-                </MenuGroup>
-              </MenuPopup>
-            </Menu>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </DashboardShellSidebarHeader>
+    <Sidebar collapsible="offcanvas">
+      <SidebarHeader>
+        <div className="grid gap-1 p-1">
+          <DropdownMenu>
+            <DropdownTrigger
+              render={
+                <Button className="w-full justify-start" variant="ghost" leadingIcon={cubeIcon}>
+                  {currentProject?.name ?? "No project"}
+                </Button>
+              }
+            />
+            <DropdownContent align="start" sideOffset={6}>
+              <DropdownLabel>Projects</DropdownLabel>
+              {projects.map((project, index) => (
+                <MenuItem
+                  key={project.id}
+                  checked={project.slug === currentProject?.slug}
+                  icon={project.slug === currentProject?.slug ? checkIcon : undefined}
+                  index={index}
+                  label={project.name}
+                  onSelect={() => openProject(project.slug)}
+                />
+              ))}
+              <DropdownSeparator />
+              <MenuItem
+                icon={plusIcon}
+                index={projects.length}
+                label="Create new project"
+                onSelect={() => setCreateOpen(true)}
+              />
+            </DropdownContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownTrigger
+              render={
+                <Button className="w-full justify-start" variant="ghost" leadingIcon={cubeIcon}>
+                  {activeOrganization?.name ?? "No organization"}
+                </Button>
+              }
+            />
+            <DropdownContent align="start" sideOffset={6}>
+              <DropdownLabel>Organizations</DropdownLabel>
+              {(organizations ?? []).map((organization, index) => (
+                <MenuItem
+                  key={organization.id}
+                  checked={organization.id === activeOrganization?.id}
+                  icon={organization.id === activeOrganization?.id ? checkIcon : undefined}
+                  index={index}
+                  label={organization.name}
+                  onSelect={() => switchOrganization(organization.id)}
+                />
+              ))}
+              <DropdownSeparator />
+              <MenuItem
+                index={(organizations ?? []).length}
+                label="Organization settings"
+                disabled
+              />
+            </DropdownContent>
+          </DropdownMenu>
+        </div>
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
+          <SidebarGroupLabel>Project</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
                   <SidebarMenuButton
-                    active={
+                    icon={item.icon}
+                    isActive={
                       matchRoute({ to: item.to, params: { projectSlug }, fuzzy: false }) !== false
                     }
                     render={<Link params={{ projectSlug }} to={item.to} />}
                   >
-                    <item.icon aria-hidden="true" />
                     {item.label}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -233,11 +201,34 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter>
+        {user && (
+          <DropdownMenu>
+            <DropdownTrigger
+              render={
+                <Button className="w-full justify-start" variant="ghost" leadingIcon={cubeIcon}>
+                  {user.name || user.email}
+                </Button>
+              }
+            />
+            <DropdownContent align="start" side="top" sideOffset={6}>
+              <DropdownLabel>{user.email}</DropdownLabel>
+              <DropdownSeparator />
+              <MenuItem
+                icon={signOutIcon}
+                index={0}
+                label="Sign out"
+                onSelect={() => void handleSignOut()}
+              />
+            </DropdownContent>
+          </DropdownMenu>
+        )}
+      </SidebarFooter>
       <CreateProjectDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
         onCreate={handleCreateProject}
       />
-    </DashboardShellSidebar>
+    </Sidebar>
   );
 }

@@ -1,9 +1,9 @@
-import { Alert, AlertDescription, AlertTitle } from "@repo/ui/components/alert";
-import { Button } from "@repo/ui/components/button";
-import { Field, FieldLabel } from "@repo/ui/components/field";
-import { Form } from "@repo/ui/components/form";
-import { Input } from "@repo/ui/components/input";
 import { useState } from "react";
+
+import { Banner, BannerDescription, BannerTitle } from "@/components/ui/banner";
+import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
 export function useCreateProjectSubmit(onCreate: (name: string) => Promise<void>) {
   const [error, setError] = useState<string | null>(null);
@@ -31,14 +31,14 @@ export function CreateProjectFields({ error }: { error: string | null }) {
   return (
     <>
       <Field>
-        <FieldLabel>Project name</FieldLabel>
-        <Input name="projectName" required maxLength={100} />
+        <FieldLabel htmlFor="create-project-name">Project name</FieldLabel>
+        <Input id="create-project-name" name="projectName" required maxLength={100} />
       </Field>
       {error && (
-        <Alert variant="error" role="alert">
-          <AlertTitle>Could not create project</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        <Banner status="error">
+          <BannerTitle>Could not create project</BannerTitle>
+          <BannerDescription>{error}</BannerDescription>
+        </Banner>
       )}
     </>
   );
@@ -48,11 +48,11 @@ export function CreateProjectForm({ onCreate }: { onCreate: (name: string) => Pr
   const { error, pending, onSubmit } = useCreateProjectSubmit(onCreate);
 
   return (
-    <Form className="grid gap-4" onSubmit={onSubmit}>
+    <form className="grid gap-4" onSubmit={onSubmit}>
       <CreateProjectFields error={error} />
-      <Button type="submit" width="full" loading={pending}>
+      <Button type="submit" className="w-full" loading={pending}>
         Create project
       </Button>
-    </Form>
+    </form>
   );
 }

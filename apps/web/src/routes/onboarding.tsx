@@ -1,10 +1,10 @@
-import { Alert, AlertDescription, AlertTitle } from "@repo/ui/components/alert";
-import { Button } from "@repo/ui/components/button";
-import { Field, FieldLabel } from "@repo/ui/components/field";
-import { Input } from "@repo/ui/components/input";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
+import { Banner, BannerDescription, BannerTitle } from "@/components/ui/banner";
+import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { completeOnboarding, getOnboardingState } from "~/server/onboarding";
 import { getSessionState } from "~/server/session";
 
@@ -48,25 +48,25 @@ function Onboarding() {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center gap-6 p-6">
-      <h1 className="text-2xl font-semibold">Create your organization</h1>
+      <h1 className="text-title font-medium">Create your organization</h1>
       <form className="grid gap-4" onSubmit={onSubmit}>
         <Field>
-          <FieldLabel>Organization name</FieldLabel>
-          <Input name="organizationName" required maxLength={100} />
+          <FieldLabel htmlFor="organization-name">Organization name</FieldLabel>
+          <Input id="organization-name" name="organizationName" required maxLength={100} />
         </Field>
         {needsProject && (
           <Field>
-            <FieldLabel>Project name</FieldLabel>
-            <Input name="projectName" required maxLength={100} />
+            <FieldLabel htmlFor="project-name">Project name</FieldLabel>
+            <Input id="project-name" name="projectName" required maxLength={100} />
           </Field>
         )}
         {error && (
-          <Alert variant="error" role="alert">
-            <AlertTitle>Could not continue</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          <Banner status="error">
+            <BannerTitle>Could not continue</BannerTitle>
+            <BannerDescription>{error}</BannerDescription>
+          </Banner>
         )}
-        <Button type="submit" width="full" loading={pending}>
+        <Button type="submit" className="w-full" loading={pending}>
           Continue
         </Button>
       </form>

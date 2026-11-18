@@ -1,14 +1,9 @@
-import { Button } from "@repo/ui/components/button";
-import { Card, CardDescription, CardHeader, CardPanel, CardTitle } from "@repo/ui/components/card";
-import {
-  Select,
-  SelectItem,
-  SelectPopup,
-  SelectTrigger,
-  SelectValue,
-} from "@repo/ui/components/select";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { authClient } from "~/lib/auth-client";
 import { useSwitchOrganization } from "~/lib/organization";
 import { getDefaultProjectSlug } from "~/server/projects";
@@ -33,42 +28,44 @@ function Home() {
   }
 
   const switchOrganization = useSwitchOrganization();
+  const options = organizations ?? [];
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-col gap-6">
+    <main className="mx-auto flex w-full max-w-2xl flex-col gap-4">
       <Card>
         <CardHeader>
           <CardTitle>Organization</CardTitle>
           <CardDescription>Choose an organization to continue.</CardDescription>
         </CardHeader>
-        <CardPanel>
-          <Select
-            value={activeOrganization?.id ?? null}
-            onValueChange={(value) => switchOrganization(String(value))}
-          >
-            <SelectTrigger aria-label="Organization">
-              <SelectValue placeholder="Select organization" />
-            </SelectTrigger>
-            <SelectPopup>
-              {(organizations ?? []).map((organization) => (
-                <SelectItem key={organization.id} value={organization.id}>
-                  {organization.name}
-                </SelectItem>
-              ))}
-            </SelectPopup>
-          </Select>
-        </CardPanel>
+        <CardContent>
+          <Field>
+            <FieldLabel htmlFor="organization">Organization</FieldLabel>
+            <Select
+              value={activeOrganization?.id}
+              onValueChange={(value) => switchOrganization(String(value))}
+            >
+              <SelectTrigger id="organization" placeholder="Select organization" />
+              <SelectContent>
+                {options.map((organization, index) => (
+                  <SelectItem key={organization.id} index={index} value={organization.id}>
+                    {organization.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+        </CardContent>
       </Card>
       <Card>
         <CardHeader>
           <CardTitle>Welcome back</CardTitle>
           <CardDescription>Signed in as {user.email}</CardDescription>
         </CardHeader>
-        <CardPanel>
-          <Button variant="outline" onClick={signOut}>
+        <CardContent>
+          <Button variant="secondary" onClick={signOut}>
             Sign out
           </Button>
-        </CardPanel>
+        </CardContent>
       </Card>
     </main>
   );
