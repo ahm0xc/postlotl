@@ -2,11 +2,10 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 import { getSessionState } from "~/server/session";
 
-export const Route = createFileRoute("/_app")({
+export const Route = createFileRoute("/_dashboard")({
   beforeLoad: async () => {
     const state = await getSessionState();
-    if (!state) throw redirect({ to: "/login" });
-    if (!state.onboardingCompleted) throw redirect({ to: "/onboarding" });
+    if (!state) throw redirect({ to: "/sign-in" });
     return { user: state.user };
   },
   component: Outlet,

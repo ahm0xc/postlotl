@@ -1,117 +1,176 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequestHeaders } from "@tanstack/react-start/server";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 
-import { auth } from "./auth";
+import { findProjectAccess, getSession, requireProjectCapability, requireUser } from "./access";
 import { db } from "./db";
 import * as schema from "./db/schema";
 import { generateUniqueProjectSlug } from "./slug";
 
-async function requireMembership(organizationId: string) {
-  const session = await auth.api.getSession({ headers: getRequestHeaders() });
-  if (!session) throw new Error("Not authenticated");
+const slugInput = z.object({ slug: z.string().min(1) });
 
-  const [membership] = await db
-    .select({ id: schema.member.id })
-    .from(schema.member)
+async function isSlugTaken(candidate: string) {
+  const [existing] = await db
+    .select({ id: schema.project.id })
+    .from(schema.project)
+    .where(eq(schema.project.slug, candidate))
+    .limit(1);
+  return existing !== undefined;
+}
+
+export const listMyProjects = createServerFn({ method: "GET" }).handler(async () => {
+  const user = await requireUser();
+
+  return db
+    .select({
+      id: schema.project.id,
+      name: schema.project.name,
+      slug: schema.project.slug,
+      role: schema.projectMember.role,
+    })
+    .from(schema.projectMember)
+    .innerJoin(schema.project, eq(schema.project.id, schema.projectMember.projectId))
+    .where(and(eq(schema.projectMember.userId, user.id), isNull(schema.project.deletedAt)))
+    .orderBy(asc(schema.project.createdAt));
+});
+
+export const getProject = createServerFn({ method: "GET" })
+  .validator(slugInput)
+  .handler(async ({ data }) => findProjectAccess(data.slug));
+
+export const getLastViewedProjectSlug = createServerFn({ method: "GET" }).handler(async () => {
+  const session = await getSession();
+  if (!session) return null;
+
+  const activeProjectId = session.session.activeProjectId;
+  if (!activeProjectId) return null;
+
+  const [active] = await db
+    .select({ slug: schema.project.slug })
+    .from(schema.projectMember)
+    .innerJoin(schema.project, eq(schema.project.id, schema.projectMember.projectId))
     .where(
       and(
-        eq(schema.member.organizationId, organizationId),
-        eq(schema.member.userId, session.user.id),
+        eq(schema.projectMember.userId, session.user.id),
+        eq(schema.project.id, activeProjectId),
+        isNull(schema.project.deletedAt),
       ),
     )
     .limit(1);
-  if (!membership) throw new Error("Not a member of this organization");
-}
 
-export const listProjects = createServerFn({ method: "GET" })
-  .validator(z.object({ organizationId: z.string().min(1) }))
+  return active?.slug ?? null;
+});
+
+export const setActiveProject = createServerFn({ method: "POST" })
+  .validator(slugInput)
   .handler(async ({ data }) => {
-    await requireMembership(data.organizationId);
+    const session = await getSession();
+    if (!session) return null;
 
-    return db
-      .select({ id: schema.project.id, name: schema.project.name, slug: schema.project.slug })
-      .from(schema.project)
-      .where(eq(schema.project.organizationId, data.organizationId))
-      .orderBy(asc(schema.project.createdAt));
+    const access = await findProjectAccess(data.slug);
+    if (!access) return null;
+
+    if (session.session.activeProjectId !== access.project.id) {
+      await db
+        .update(schema.session)
+        .set({ activeProjectId: access.project.id })
+        .where(eq(schema.session.id, session.session.id));
+    }
+
+    return access;
   });
 
-export const getOrganizationProjects = createServerFn({ method: "GET" })
-  .validator(z.object({ organizationSlug: z.string().min(1) }))
+export const createProject = createServerFn({ method: "POST" })
+  .validator(z.object({ name: z.string().trim().min(1).max(100) }))
   .handler(async ({ data }) => {
-    const session = await auth.api.getSession({ headers: getRequestHeaders() });
-    if (!session) throw new Error("Not authenticated");
+    const user = await requireUser();
+    return createOwnedProject(user.id, data.name);
+  });
 
-    const [organization] = await db
-      .select({
-        id: schema.organization.id,
-        name: schema.organization.name,
-        slug: schema.organization.slug,
-      })
-      .from(schema.organization)
-      .innerJoin(schema.member, eq(schema.member.organizationId, schema.organization.id))
+async function createOwnedProject(userId: string, name: string) {
+  const slug = await generateUniqueProjectSlug(name, isSlugTaken);
+
+  return db.transaction(async (tx) => {
+    const [created] = await tx
+      .insert(schema.project)
+      .values({ name, slug })
+      .returning({ id: schema.project.id, name: schema.project.name, slug: schema.project.slug });
+
+    await tx.insert(schema.projectMember).values({
+      projectId: created.id,
+      userId,
+      role: "owner",
+    });
+
+    return created;
+  });
+}
+
+export const updateProject = createServerFn({ method: "POST" })
+  .validator(slugInput.extend({ name: z.string().trim().min(1).max(100) }))
+  .handler(async ({ data }) => {
+    const access = await requireProjectCapability(data.slug, "settings");
+
+    const [updated] = await db
+      .update(schema.project)
+      .set({ name: data.name })
+      .where(eq(schema.project.id, access.project.id))
+      .returning({ id: schema.project.id, name: schema.project.name, slug: schema.project.slug });
+
+    return updated;
+  });
+
+export const deleteProject = createServerFn({ method: "POST" })
+  .validator(slugInput)
+  .handler(async ({ data }) => {
+    const access = await requireProjectCapability(data.slug, "delete_project");
+
+    await db
+      .update(schema.project)
+      .set({ deletedAt: new Date() })
+      .where(eq(schema.project.id, access.project.id));
+
+    return { ok: true };
+  });
+
+export const transferOwnership = createServerFn({ method: "POST" })
+  .validator(slugInput.extend({ userId: z.string().min(1) }))
+  .handler(async ({ data }) => {
+    const access = await requireProjectCapability(data.slug, "transfer_ownership");
+    if (data.userId === access.user.id) return { ok: true };
+
+    const [target] = await db
+      .select({ id: schema.projectMember.id })
+      .from(schema.projectMember)
       .where(
         and(
-          eq(schema.organization.slug, data.organizationSlug),
-          eq(schema.member.userId, session.user.id),
+          eq(schema.projectMember.projectId, access.project.id),
+          eq(schema.projectMember.userId, data.userId),
         ),
       )
       .limit(1);
-    if (!organization) return null;
+    if (!target) throw new Error("That user is not a member of this project");
 
-    const projects = await db
-      .select({ id: schema.project.id, name: schema.project.name, slug: schema.project.slug })
-      .from(schema.project)
-      .where(eq(schema.project.organizationId, organization.id))
-      .orderBy(asc(schema.project.createdAt));
-
-    return { organization, projects };
-  });
-
-export const getDefaultProjectSlug = createServerFn({ method: "GET" }).handler(async () => {
-  const session = await auth.api.getSession({ headers: getRequestHeaders() });
-  if (!session) throw new Error("Not authenticated");
-
-  const organizationId = session.session.activeOrganizationId;
-  if (!organizationId) return null;
-
-  const [project] = await db
-    .select({ slug: schema.project.slug })
-    .from(schema.project)
-    .where(eq(schema.project.organizationId, organizationId))
-    .orderBy(asc(schema.project.createdAt))
-    .limit(1);
-  return project?.slug ?? null;
-});
-
-export const createProject = createServerFn({ method: "POST" })
-  .validator(
-    z.object({
-      organizationId: z.string().min(1),
-      name: z.string().trim().min(1).max(100),
-    }),
-  )
-  .handler(async ({ data }) => {
-    await requireMembership(data.organizationId);
-
-    const slug = await generateUniqueProjectSlug(data.name, async (candidate) => {
-      const [existing] = await db
-        .select({ id: schema.project.id })
-        .from(schema.project)
+    await db.transaction(async (tx) => {
+      await tx
+        .update(schema.projectMember)
+        .set({ role: "admin" })
         .where(
           and(
-            eq(schema.project.organizationId, data.organizationId),
-            eq(schema.project.slug, candidate),
+            eq(schema.projectMember.projectId, access.project.id),
+            eq(schema.projectMember.userId, access.user.id),
           ),
-        )
-        .limit(1);
-      return existing !== undefined;
+        );
+      await tx
+        .update(schema.projectMember)
+        .set({ role: "owner" })
+        .where(
+          and(
+            eq(schema.projectMember.projectId, access.project.id),
+            eq(schema.projectMember.userId, data.userId),
+          ),
+        );
     });
 
-    const [created] = await db
-      .insert(schema.project)
-      .values({ organizationId: data.organizationId, name: data.name, slug })
-      .returning({ id: schema.project.id, name: schema.project.name, slug: schema.project.slug });
-    return created;
+    return { ok: true };
   });

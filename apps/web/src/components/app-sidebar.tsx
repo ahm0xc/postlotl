@@ -3,11 +3,13 @@ import {
   ChartLineUp,
   Check,
   Flag,
+  GearSix,
   House,
   Plus,
   Pulse,
   Robot,
   SignOut,
+  SquaresFour,
   Users,
   VideoCamera,
 } from "@phosphor-icons/react/dist/ssr";
@@ -39,8 +41,7 @@ import {
 } from "@/components/ui/sidebar";
 import type { IconComponent } from "@/lib/icon-context";
 import { authClient } from "~/lib/auth-client";
-import { useSwitchOrganization } from "~/lib/organization";
-import { createProject, listProjects } from "~/server/projects";
+import { createProject, listMyProjects } from "~/server/projects";
 
 import { CreateProjectDialog } from "./create-project-dialog";
 
@@ -76,23 +77,20 @@ const cubeIcon = asIcon(Buildings);
 const plusIcon = asIcon(Plus);
 const checkIcon = asIcon(Check);
 const signOutIcon = asIcon(SignOut);
+const settingsIcon = asIcon(GearSix);
+const projectsIcon = asIcon(SquaresFour);
 
 export function AppSidebar() {
   const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();
-  const { data: organizations } = authClient.useListOrganizations();
-  const { data: activeOrganization } = authClient.useActiveOrganization();
   const navigate = useNavigate();
   const matchRoute = useMatchRoute();
-  const switchOrganization = useSwitchOrganization();
-  const { projectSlug } = useParams({ from: "/_app/project/$projectSlug" });
+  const { projectSlug } = useParams({ from: "/_dashboard/project/$projectSlug" });
   const [createOpen, setCreateOpen] = useState(false);
-  const organizationId = activeOrganization?.id;
 
   const { data: projects = [] } = useQuery({
-    queryKey: ["projects", organizationId],
-    queryFn: () => listProjects({ data: { organizationId: organizationId ?? "" } }),
-    enabled: organizationId !== undefined,
+    queryKey: ["projects"],
+    queryFn: () => listMyProjects(),
   });
 
   const currentProject = projects.find((project) => project.slug === projectSlug) ?? projects[0];
@@ -102,22 +100,21 @@ export function AppSidebar() {
   }
 
   async function handleCreateProject(name: string) {
-    if (!organizationId) throw new Error("No active organization");
-    const project = await createProject({ data: { organizationId, name } });
-    await queryClient.invalidateQueries({ queryKey: ["projects", organizationId] });
+    const project = await createProject({ data: { name } });
+    await queryClient.invalidateQueries({ queryKey: ["projects"] });
     setCreateOpen(false);
     await openProject(project.slug);
   }
 
   async function handleSignOut() {
     await authClient.signOut();
-    await navigate({ to: "/login" });
+    await navigate({ to: "/sign-in" });
   }
 
   const user = session?.user;
 
   return (
-    <Sidebar collapsible="offcanvas">
+    <Sidebar collapsible="none">
       <SidebarHeader>
         <div className="grid gap-1 p-1">
           <DropdownMenu>
@@ -147,33 +144,11 @@ export function AppSidebar() {
                 label="Create new project"
                 onSelect={() => setCreateOpen(true)}
               />
-            </DropdownContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownTrigger
-              render={
-                <Button className="w-full justify-start" variant="ghost" leadingIcon={cubeIcon}>
-                  {activeOrganization?.name ?? "No organization"}
-                </Button>
-              }
-            />
-            <DropdownContent align="start" sideOffset={6}>
-              <DropdownLabel>Organizations</DropdownLabel>
-              {(organizations ?? []).map((organization, index) => (
-                <MenuItem
-                  key={organization.id}
-                  checked={organization.id === activeOrganization?.id}
-                  icon={organization.id === activeOrganization?.id ? checkIcon : undefined}
-                  index={index}
-                  label={organization.name}
-                  onSelect={() => switchOrganization(organization.id)}
-                />
-              ))}
-              <DropdownSeparator />
               <MenuItem
-                index={(organizations ?? []).length}
-                label="Organization settings"
-                disabled
+                icon={projectsIcon}
+                index={projects.length + 1}
+                label="All projects"
+                onSelect={() => void navigate({ to: "/projects" })}
               />
             </DropdownContent>
           </DropdownMenu>
@@ -202,6 +177,23 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              icon={settingsIcon}
+              isActive={
+                matchRoute({
+                  to: "/project/$projectSlug/settings",
+                  params: { projectSlug },
+                  fuzzy: false,
+                }) !== false
+              }
+              render={<Link params={{ projectSlug }} to="/project/$projectSlug/settings" />}
+            >
+              Settings
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
         {user && (
           <DropdownMenu>
             <DropdownTrigger

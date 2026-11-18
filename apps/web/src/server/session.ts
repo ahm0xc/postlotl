@@ -9,6 +9,5 @@ export const getSessionState = createServerFn({ method: "GET" }).handler(async (
 
   return {
     user: { id: session.user.id, name: session.user.name, email: session.user.email },
-    onboardingCompleted: session.user.onboardingCompleted === true,
   };
 });

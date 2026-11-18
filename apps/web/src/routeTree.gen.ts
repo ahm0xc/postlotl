@@ -9,240 +9,247 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AppRouteImport } from './routes/_app'
 import { Route as AuthRouteImport } from './routes/_auth'
-import { Route as OnboardingRouteImport } from './routes/onboarding'
-import { Route as AppIndexRouteImport } from './routes/_app/index'
-import { Route as AuthLoginRouteImport } from './routes/_auth/login'
-import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
+import { Route as DashboardRouteImport } from './routes/_dashboard'
+import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
+import { Route as AuthSignUpRouteImport } from './routes/_auth/sign-up'
+import { Route as DashboardIndexRouteImport } from './routes/_dashboard/index'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
-import { Route as AppOrgOrgSlugRouteImport } from './routes/_app/org/$orgSlug'
-import { Route as AppProjectProjectSlugRouteImport } from './routes/_app/project/$projectSlug'
+import { Route as InviteTokenRouteImport } from './routes/invite.$token'
+import { Route as DashboardProjectProjectSlugRouteImport } from './routes/_dashboard/project/$projectSlug'
+import { Route as DashboardProjectsIndexRouteImport } from './routes/_dashboard/projects/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as AppProjectProjectSlugIndexRouteImport } from './routes/_app/project/$projectSlug/index'
-import { Route as AppProjectProjectSlugActivityRouteImport } from './routes/_app/project/$projectSlug/activity'
-import { Route as AppProjectProjectSlugAiObservabilityRouteImport } from './routes/_app/project/$projectSlug/ai-observability'
-import { Route as AppProjectProjectSlugFeatureFlagsRouteImport } from './routes/_app/project/$projectSlug/feature-flags'
-import { Route as AppProjectProjectSlugPeopleRouteImport } from './routes/_app/project/$projectSlug/people'
-import { Route as AppProjectProjectSlugReplayVisionRouteImport } from './routes/_app/project/$projectSlug/replay-vision'
-import { Route as AppProjectProjectSlugWebAnalyticsRouteImport } from './routes/_app/project/$projectSlug/web-analytics'
+import { Route as DashboardProjectProjectSlugIndexRouteImport } from './routes/_dashboard/project/$projectSlug/index'
+import { Route as DashboardProjectProjectSlugActivityRouteImport } from './routes/_dashboard/project/$projectSlug/activity'
+import { Route as DashboardProjectProjectSlugAiObservabilityRouteImport } from './routes/_dashboard/project/$projectSlug/ai-observability'
+import { Route as DashboardProjectProjectSlugFeatureFlagsRouteImport } from './routes/_dashboard/project/$projectSlug/feature-flags'
+import { Route as DashboardProjectProjectSlugPeopleRouteImport } from './routes/_dashboard/project/$projectSlug/people'
+import { Route as DashboardProjectProjectSlugReplayVisionRouteImport } from './routes/_dashboard/project/$projectSlug/replay-vision'
+import { Route as DashboardProjectProjectSlugSettingsRouteImport } from './routes/_dashboard/project/$projectSlug/settings'
+import { Route as DashboardProjectProjectSlugWebAnalyticsRouteImport } from './routes/_dashboard/project/$projectSlug/web-analytics'
 
-const AppRoute = AppRouteImport.update({
-  id: '/_app',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/_auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/_dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppIndexRoute = AppIndexRouteImport.update({
+const AuthSignInRoute = AuthSignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthSignUpRoute = AuthSignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
+  getParentRoute: () => AuthRoute,
+} as any)
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AuthLoginRoute = AuthLoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthSignupRoute = AuthSignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => AuthRoute,
+  getParentRoute: () => DashboardRoute,
 } as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
   id: '/api/health',
   path: '/api/health',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppOrgOrgSlugRoute = AppOrgOrgSlugRouteImport.update({
-  id: '/org/$orgSlug',
-  path: '/org/$orgSlug',
-  getParentRoute: () => AppRoute,
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AppProjectProjectSlugRoute = AppProjectProjectSlugRouteImport.update({
-  id: '/project/$projectSlug',
-  path: '/project/$projectSlug',
-  getParentRoute: () => AppRoute,
+const DashboardProjectProjectSlugRoute =
+  DashboardProjectProjectSlugRouteImport.update({
+    id: '/project/$projectSlug',
+    path: '/project/$projectSlug',
+    getParentRoute: () => DashboardRoute,
+  } as any)
+const DashboardProjectsIndexRoute = DashboardProjectsIndexRouteImport.update({
+  id: '/projects/',
+  path: '/projects/',
+  getParentRoute: () => DashboardRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppProjectProjectSlugIndexRoute =
-  AppProjectProjectSlugIndexRouteImport.update({
+const DashboardProjectProjectSlugIndexRoute =
+  DashboardProjectProjectSlugIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => AppProjectProjectSlugRoute,
+    getParentRoute: () => DashboardProjectProjectSlugRoute,
   } as any)
-const AppProjectProjectSlugActivityRoute =
-  AppProjectProjectSlugActivityRouteImport.update({
+const DashboardProjectProjectSlugActivityRoute =
+  DashboardProjectProjectSlugActivityRouteImport.update({
     id: '/activity',
     path: '/activity',
-    getParentRoute: () => AppProjectProjectSlugRoute,
+    getParentRoute: () => DashboardProjectProjectSlugRoute,
   } as any)
-const AppProjectProjectSlugAiObservabilityRoute =
-  AppProjectProjectSlugAiObservabilityRouteImport.update({
+const DashboardProjectProjectSlugAiObservabilityRoute =
+  DashboardProjectProjectSlugAiObservabilityRouteImport.update({
     id: '/ai-observability',
     path: '/ai-observability',
-    getParentRoute: () => AppProjectProjectSlugRoute,
+    getParentRoute: () => DashboardProjectProjectSlugRoute,
   } as any)
-const AppProjectProjectSlugFeatureFlagsRoute =
-  AppProjectProjectSlugFeatureFlagsRouteImport.update({
+const DashboardProjectProjectSlugFeatureFlagsRoute =
+  DashboardProjectProjectSlugFeatureFlagsRouteImport.update({
     id: '/feature-flags',
     path: '/feature-flags',
-    getParentRoute: () => AppProjectProjectSlugRoute,
+    getParentRoute: () => DashboardProjectProjectSlugRoute,
   } as any)
-const AppProjectProjectSlugPeopleRoute =
-  AppProjectProjectSlugPeopleRouteImport.update({
+const DashboardProjectProjectSlugPeopleRoute =
+  DashboardProjectProjectSlugPeopleRouteImport.update({
     id: '/people',
     path: '/people',
-    getParentRoute: () => AppProjectProjectSlugRoute,
+    getParentRoute: () => DashboardProjectProjectSlugRoute,
   } as any)
-const AppProjectProjectSlugReplayVisionRoute =
-  AppProjectProjectSlugReplayVisionRouteImport.update({
+const DashboardProjectProjectSlugReplayVisionRoute =
+  DashboardProjectProjectSlugReplayVisionRouteImport.update({
     id: '/replay-vision',
     path: '/replay-vision',
-    getParentRoute: () => AppProjectProjectSlugRoute,
+    getParentRoute: () => DashboardProjectProjectSlugRoute,
   } as any)
-const AppProjectProjectSlugWebAnalyticsRoute =
-  AppProjectProjectSlugWebAnalyticsRouteImport.update({
+const DashboardProjectProjectSlugSettingsRoute =
+  DashboardProjectProjectSlugSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => DashboardProjectProjectSlugRoute,
+  } as any)
+const DashboardProjectProjectSlugWebAnalyticsRoute =
+  DashboardProjectProjectSlugWebAnalyticsRouteImport.update({
     id: '/web-analytics',
     path: '/web-analytics',
-    getParentRoute: () => AppProjectProjectSlugRoute,
+    getParentRoute: () => DashboardProjectProjectSlugRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AppIndexRoute
-  '/onboarding': typeof OnboardingRoute
-  '/login': typeof AuthLoginRoute
-  '/signup': typeof AuthSignupRoute
+  '/': typeof DashboardIndexRoute
+  '/sign-in': typeof AuthSignInRoute
+  '/sign-up': typeof AuthSignUpRoute
   '/api/health': typeof ApiHealthRoute
-  '/org/$orgSlug': typeof AppOrgOrgSlugRoute
-  '/project/$projectSlug': typeof AppProjectProjectSlugRouteWithChildren
+  '/invite/$token': typeof InviteTokenRoute
+  '/project/$projectSlug': typeof DashboardProjectProjectSlugRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/project/$projectSlug/activity': typeof AppProjectProjectSlugActivityRoute
-  '/project/$projectSlug/ai-observability': typeof AppProjectProjectSlugAiObservabilityRoute
-  '/project/$projectSlug/feature-flags': typeof AppProjectProjectSlugFeatureFlagsRoute
-  '/project/$projectSlug/people': typeof AppProjectProjectSlugPeopleRoute
-  '/project/$projectSlug/replay-vision': typeof AppProjectProjectSlugReplayVisionRoute
-  '/project/$projectSlug/web-analytics': typeof AppProjectProjectSlugWebAnalyticsRoute
-  '/project/$projectSlug/': typeof AppProjectProjectSlugIndexRoute
+  '/projects/': typeof DashboardProjectsIndexRoute
+  '/project/$projectSlug/activity': typeof DashboardProjectProjectSlugActivityRoute
+  '/project/$projectSlug/ai-observability': typeof DashboardProjectProjectSlugAiObservabilityRoute
+  '/project/$projectSlug/feature-flags': typeof DashboardProjectProjectSlugFeatureFlagsRoute
+  '/project/$projectSlug/people': typeof DashboardProjectProjectSlugPeopleRoute
+  '/project/$projectSlug/replay-vision': typeof DashboardProjectProjectSlugReplayVisionRoute
+  '/project/$projectSlug/settings': typeof DashboardProjectProjectSlugSettingsRoute
+  '/project/$projectSlug/web-analytics': typeof DashboardProjectProjectSlugWebAnalyticsRoute
+  '/project/$projectSlug/': typeof DashboardProjectProjectSlugIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof AppIndexRoute
-  '/onboarding': typeof OnboardingRoute
-  '/login': typeof AuthLoginRoute
-  '/signup': typeof AuthSignupRoute
+  '/': typeof DashboardIndexRoute
+  '/sign-in': typeof AuthSignInRoute
+  '/sign-up': typeof AuthSignUpRoute
   '/api/health': typeof ApiHealthRoute
-  '/org/$orgSlug': typeof AppOrgOrgSlugRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/project/$projectSlug/activity': typeof AppProjectProjectSlugActivityRoute
-  '/project/$projectSlug/ai-observability': typeof AppProjectProjectSlugAiObservabilityRoute
-  '/project/$projectSlug/feature-flags': typeof AppProjectProjectSlugFeatureFlagsRoute
-  '/project/$projectSlug/people': typeof AppProjectProjectSlugPeopleRoute
-  '/project/$projectSlug/replay-vision': typeof AppProjectProjectSlugReplayVisionRoute
-  '/project/$projectSlug/web-analytics': typeof AppProjectProjectSlugWebAnalyticsRoute
-  '/project/$projectSlug': typeof AppProjectProjectSlugIndexRoute
+  '/projects': typeof DashboardProjectsIndexRoute
+  '/project/$projectSlug/activity': typeof DashboardProjectProjectSlugActivityRoute
+  '/project/$projectSlug/ai-observability': typeof DashboardProjectProjectSlugAiObservabilityRoute
+  '/project/$projectSlug/feature-flags': typeof DashboardProjectProjectSlugFeatureFlagsRoute
+  '/project/$projectSlug/people': typeof DashboardProjectProjectSlugPeopleRoute
+  '/project/$projectSlug/replay-vision': typeof DashboardProjectProjectSlugReplayVisionRoute
+  '/project/$projectSlug/settings': typeof DashboardProjectProjectSlugSettingsRoute
+  '/project/$projectSlug/web-analytics': typeof DashboardProjectProjectSlugWebAnalyticsRoute
+  '/project/$projectSlug': typeof DashboardProjectProjectSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/_app': typeof AppRouteWithChildren
   '/_auth': typeof AuthRouteWithChildren
-  '/onboarding': typeof OnboardingRoute
-  '/_auth/login': typeof AuthLoginRoute
-  '/_auth/signup': typeof AuthSignupRoute
+  '/_dashboard': typeof DashboardRouteWithChildren
+  '/_auth/sign-in': typeof AuthSignInRoute
+  '/_auth/sign-up': typeof AuthSignUpRoute
   '/api/health': typeof ApiHealthRoute
-  '/_app/': typeof AppIndexRoute
-  '/_app/org/$orgSlug': typeof AppOrgOrgSlugRoute
-  '/_app/project/$projectSlug': typeof AppProjectProjectSlugRouteWithChildren
+  '/invite/$token': typeof InviteTokenRoute
+  '/_dashboard/': typeof DashboardIndexRoute
+  '/_dashboard/project/$projectSlug': typeof DashboardProjectProjectSlugRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/_app/project/$projectSlug/activity': typeof AppProjectProjectSlugActivityRoute
-  '/_app/project/$projectSlug/ai-observability': typeof AppProjectProjectSlugAiObservabilityRoute
-  '/_app/project/$projectSlug/feature-flags': typeof AppProjectProjectSlugFeatureFlagsRoute
-  '/_app/project/$projectSlug/people': typeof AppProjectProjectSlugPeopleRoute
-  '/_app/project/$projectSlug/replay-vision': typeof AppProjectProjectSlugReplayVisionRoute
-  '/_app/project/$projectSlug/web-analytics': typeof AppProjectProjectSlugWebAnalyticsRoute
-  '/_app/project/$projectSlug/': typeof AppProjectProjectSlugIndexRoute
+  '/_dashboard/projects/': typeof DashboardProjectsIndexRoute
+  '/_dashboard/project/$projectSlug/activity': typeof DashboardProjectProjectSlugActivityRoute
+  '/_dashboard/project/$projectSlug/ai-observability': typeof DashboardProjectProjectSlugAiObservabilityRoute
+  '/_dashboard/project/$projectSlug/feature-flags': typeof DashboardProjectProjectSlugFeatureFlagsRoute
+  '/_dashboard/project/$projectSlug/people': typeof DashboardProjectProjectSlugPeopleRoute
+  '/_dashboard/project/$projectSlug/replay-vision': typeof DashboardProjectProjectSlugReplayVisionRoute
+  '/_dashboard/project/$projectSlug/settings': typeof DashboardProjectProjectSlugSettingsRoute
+  '/_dashboard/project/$projectSlug/web-analytics': typeof DashboardProjectProjectSlugWebAnalyticsRoute
+  '/_dashboard/project/$projectSlug/': typeof DashboardProjectProjectSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/onboarding'
-    | '/login'
-    | '/signup'
+    | '/sign-in'
+    | '/sign-up'
     | '/api/health'
-    | '/org/$orgSlug'
+    | '/invite/$token'
     | '/project/$projectSlug'
     | '/api/auth/$'
+    | '/projects/'
     | '/project/$projectSlug/activity'
     | '/project/$projectSlug/ai-observability'
     | '/project/$projectSlug/feature-flags'
     | '/project/$projectSlug/people'
     | '/project/$projectSlug/replay-vision'
+    | '/project/$projectSlug/settings'
     | '/project/$projectSlug/web-analytics'
     | '/project/$projectSlug/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/onboarding'
-    | '/login'
-    | '/signup'
+    | '/sign-in'
+    | '/sign-up'
     | '/api/health'
-    | '/org/$orgSlug'
+    | '/invite/$token'
     | '/api/auth/$'
+    | '/projects'
     | '/project/$projectSlug/activity'
     | '/project/$projectSlug/ai-observability'
     | '/project/$projectSlug/feature-flags'
     | '/project/$projectSlug/people'
     | '/project/$projectSlug/replay-vision'
+    | '/project/$projectSlug/settings'
     | '/project/$projectSlug/web-analytics'
     | '/project/$projectSlug'
   id:
     | '__root__'
-    | '/_app'
     | '/_auth'
-    | '/onboarding'
-    | '/_auth/login'
-    | '/_auth/signup'
+    | '/_dashboard'
+    | '/_auth/sign-in'
+    | '/_auth/sign-up'
     | '/api/health'
-    | '/_app/'
-    | '/_app/org/$orgSlug'
-    | '/_app/project/$projectSlug'
+    | '/invite/$token'
+    | '/_dashboard/'
+    | '/_dashboard/project/$projectSlug'
     | '/api/auth/$'
-    | '/_app/project/$projectSlug/activity'
-    | '/_app/project/$projectSlug/ai-observability'
-    | '/_app/project/$projectSlug/feature-flags'
-    | '/_app/project/$projectSlug/people'
-    | '/_app/project/$projectSlug/replay-vision'
-    | '/_app/project/$projectSlug/web-analytics'
-    | '/_app/project/$projectSlug/'
+    | '/_dashboard/projects/'
+    | '/_dashboard/project/$projectSlug/activity'
+    | '/_dashboard/project/$projectSlug/ai-observability'
+    | '/_dashboard/project/$projectSlug/feature-flags'
+    | '/_dashboard/project/$projectSlug/people'
+    | '/_dashboard/project/$projectSlug/replay-vision'
+    | '/_dashboard/project/$projectSlug/settings'
+    | '/_dashboard/project/$projectSlug/web-analytics'
+    | '/_dashboard/project/$projectSlug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
-  OnboardingRoute: typeof OnboardingRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
   ApiHealthRoute: typeof ApiHealthRoute
+  InviteTokenRoute: typeof InviteTokenRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_app': {
-      id: '/_app'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AppRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_auth': {
       id: '/_auth'
       path: ''
@@ -250,33 +257,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
+    '/_dashboard': {
+      id: '/_dashboard'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/': {
-      id: '/_app/'
+    '/_auth/sign-in': {
+      id: '/_auth/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof AuthSignInRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/sign-up': {
+      id: '/_auth/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof AuthSignUpRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_dashboard/': {
+      id: '/_dashboard/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof AppIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_auth/login': {
-      id: '/_auth/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof AuthLoginRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/_auth/signup': {
-      id: '/_auth/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof AuthSignupRouteImport
-      parentRoute: typeof AuthRoute
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/api/health': {
       id: '/api/health'
@@ -285,19 +292,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/org/$orgSlug': {
-      id: '/_app/org/$orgSlug'
-      path: '/org/$orgSlug'
-      fullPath: '/org/$orgSlug'
-      preLoaderRoute: typeof AppOrgOrgSlugRouteImport
-      parentRoute: typeof AppRoute
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_app/project/$projectSlug': {
-      id: '/_app/project/$projectSlug'
+    '/_dashboard/project/$projectSlug': {
+      id: '/_dashboard/project/$projectSlug'
       path: '/project/$projectSlug'
       fullPath: '/project/$projectSlug'
-      preLoaderRoute: typeof AppProjectProjectSlugRouteImport
-      parentRoute: typeof AppRoute
+      preLoaderRoute: typeof DashboardProjectProjectSlugRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/_dashboard/projects/': {
+      id: '/_dashboard/projects/'
+      path: '/projects'
+      fullPath: '/projects/'
+      preLoaderRoute: typeof DashboardProjectsIndexRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -306,118 +320,135 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/project/$projectSlug/': {
-      id: '/_app/project/$projectSlug/'
+    '/_dashboard/project/$projectSlug/': {
+      id: '/_dashboard/project/$projectSlug/'
       path: '/'
       fullPath: '/project/$projectSlug/'
-      preLoaderRoute: typeof AppProjectProjectSlugIndexRouteImport
-      parentRoute: typeof AppProjectProjectSlugRoute
+      preLoaderRoute: typeof DashboardProjectProjectSlugIndexRouteImport
+      parentRoute: typeof DashboardProjectProjectSlugRoute
     }
-    '/_app/project/$projectSlug/activity': {
-      id: '/_app/project/$projectSlug/activity'
+    '/_dashboard/project/$projectSlug/activity': {
+      id: '/_dashboard/project/$projectSlug/activity'
       path: '/activity'
       fullPath: '/project/$projectSlug/activity'
-      preLoaderRoute: typeof AppProjectProjectSlugActivityRouteImport
-      parentRoute: typeof AppProjectProjectSlugRoute
+      preLoaderRoute: typeof DashboardProjectProjectSlugActivityRouteImport
+      parentRoute: typeof DashboardProjectProjectSlugRoute
     }
-    '/_app/project/$projectSlug/ai-observability': {
-      id: '/_app/project/$projectSlug/ai-observability'
+    '/_dashboard/project/$projectSlug/ai-observability': {
+      id: '/_dashboard/project/$projectSlug/ai-observability'
       path: '/ai-observability'
       fullPath: '/project/$projectSlug/ai-observability'
-      preLoaderRoute: typeof AppProjectProjectSlugAiObservabilityRouteImport
-      parentRoute: typeof AppProjectProjectSlugRoute
+      preLoaderRoute: typeof DashboardProjectProjectSlugAiObservabilityRouteImport
+      parentRoute: typeof DashboardProjectProjectSlugRoute
     }
-    '/_app/project/$projectSlug/feature-flags': {
-      id: '/_app/project/$projectSlug/feature-flags'
+    '/_dashboard/project/$projectSlug/feature-flags': {
+      id: '/_dashboard/project/$projectSlug/feature-flags'
       path: '/feature-flags'
       fullPath: '/project/$projectSlug/feature-flags'
-      preLoaderRoute: typeof AppProjectProjectSlugFeatureFlagsRouteImport
-      parentRoute: typeof AppProjectProjectSlugRoute
+      preLoaderRoute: typeof DashboardProjectProjectSlugFeatureFlagsRouteImport
+      parentRoute: typeof DashboardProjectProjectSlugRoute
     }
-    '/_app/project/$projectSlug/people': {
-      id: '/_app/project/$projectSlug/people'
+    '/_dashboard/project/$projectSlug/people': {
+      id: '/_dashboard/project/$projectSlug/people'
       path: '/people'
       fullPath: '/project/$projectSlug/people'
-      preLoaderRoute: typeof AppProjectProjectSlugPeopleRouteImport
-      parentRoute: typeof AppProjectProjectSlugRoute
+      preLoaderRoute: typeof DashboardProjectProjectSlugPeopleRouteImport
+      parentRoute: typeof DashboardProjectProjectSlugRoute
     }
-    '/_app/project/$projectSlug/replay-vision': {
-      id: '/_app/project/$projectSlug/replay-vision'
+    '/_dashboard/project/$projectSlug/replay-vision': {
+      id: '/_dashboard/project/$projectSlug/replay-vision'
       path: '/replay-vision'
       fullPath: '/project/$projectSlug/replay-vision'
-      preLoaderRoute: typeof AppProjectProjectSlugReplayVisionRouteImport
-      parentRoute: typeof AppProjectProjectSlugRoute
+      preLoaderRoute: typeof DashboardProjectProjectSlugReplayVisionRouteImport
+      parentRoute: typeof DashboardProjectProjectSlugRoute
     }
-    '/_app/project/$projectSlug/web-analytics': {
-      id: '/_app/project/$projectSlug/web-analytics'
+    '/_dashboard/project/$projectSlug/settings': {
+      id: '/_dashboard/project/$projectSlug/settings'
+      path: '/settings'
+      fullPath: '/project/$projectSlug/settings'
+      preLoaderRoute: typeof DashboardProjectProjectSlugSettingsRouteImport
+      parentRoute: typeof DashboardProjectProjectSlugRoute
+    }
+    '/_dashboard/project/$projectSlug/web-analytics': {
+      id: '/_dashboard/project/$projectSlug/web-analytics'
       path: '/web-analytics'
       fullPath: '/project/$projectSlug/web-analytics'
-      preLoaderRoute: typeof AppProjectProjectSlugWebAnalyticsRouteImport
-      parentRoute: typeof AppProjectProjectSlugRoute
+      preLoaderRoute: typeof DashboardProjectProjectSlugWebAnalyticsRouteImport
+      parentRoute: typeof DashboardProjectProjectSlugRoute
     }
   }
 }
 
-interface AppProjectProjectSlugRouteChildren {
-  AppProjectProjectSlugActivityRoute: typeof AppProjectProjectSlugActivityRoute
-  AppProjectProjectSlugAiObservabilityRoute: typeof AppProjectProjectSlugAiObservabilityRoute
-  AppProjectProjectSlugFeatureFlagsRoute: typeof AppProjectProjectSlugFeatureFlagsRoute
-  AppProjectProjectSlugPeopleRoute: typeof AppProjectProjectSlugPeopleRoute
-  AppProjectProjectSlugReplayVisionRoute: typeof AppProjectProjectSlugReplayVisionRoute
-  AppProjectProjectSlugWebAnalyticsRoute: typeof AppProjectProjectSlugWebAnalyticsRoute
-  AppProjectProjectSlugIndexRoute: typeof AppProjectProjectSlugIndexRoute
-}
-
-const AppProjectProjectSlugRouteChildren: AppProjectProjectSlugRouteChildren = {
-  AppProjectProjectSlugActivityRoute: AppProjectProjectSlugActivityRoute,
-  AppProjectProjectSlugAiObservabilityRoute:
-    AppProjectProjectSlugAiObservabilityRoute,
-  AppProjectProjectSlugFeatureFlagsRoute:
-    AppProjectProjectSlugFeatureFlagsRoute,
-  AppProjectProjectSlugPeopleRoute: AppProjectProjectSlugPeopleRoute,
-  AppProjectProjectSlugReplayVisionRoute:
-    AppProjectProjectSlugReplayVisionRoute,
-  AppProjectProjectSlugWebAnalyticsRoute:
-    AppProjectProjectSlugWebAnalyticsRoute,
-  AppProjectProjectSlugIndexRoute: AppProjectProjectSlugIndexRoute,
-}
-
-const AppProjectProjectSlugRouteWithChildren =
-  AppProjectProjectSlugRoute._addFileChildren(
-    AppProjectProjectSlugRouteChildren,
-  )
-
-interface AppRouteChildren {
-  AppIndexRoute: typeof AppIndexRoute
-  AppOrgOrgSlugRoute: typeof AppOrgOrgSlugRoute
-  AppProjectProjectSlugRoute: typeof AppProjectProjectSlugRouteWithChildren
-}
-
-const AppRouteChildren: AppRouteChildren = {
-  AppIndexRoute: AppIndexRoute,
-  AppOrgOrgSlugRoute: AppOrgOrgSlugRoute,
-  AppProjectProjectSlugRoute: AppProjectProjectSlugRouteWithChildren,
-}
-
-const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
-
 interface AuthRouteChildren {
-  AuthLoginRoute: typeof AuthLoginRoute
-  AuthSignupRoute: typeof AuthSignupRoute
+  AuthSignInRoute: typeof AuthSignInRoute
+  AuthSignUpRoute: typeof AuthSignUpRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
-  AuthLoginRoute: AuthLoginRoute,
-  AuthSignupRoute: AuthSignupRoute,
+  AuthSignInRoute: AuthSignInRoute,
+  AuthSignUpRoute: AuthSignUpRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
+interface DashboardProjectProjectSlugRouteChildren {
+  DashboardProjectProjectSlugActivityRoute: typeof DashboardProjectProjectSlugActivityRoute
+  DashboardProjectProjectSlugAiObservabilityRoute: typeof DashboardProjectProjectSlugAiObservabilityRoute
+  DashboardProjectProjectSlugFeatureFlagsRoute: typeof DashboardProjectProjectSlugFeatureFlagsRoute
+  DashboardProjectProjectSlugPeopleRoute: typeof DashboardProjectProjectSlugPeopleRoute
+  DashboardProjectProjectSlugReplayVisionRoute: typeof DashboardProjectProjectSlugReplayVisionRoute
+  DashboardProjectProjectSlugSettingsRoute: typeof DashboardProjectProjectSlugSettingsRoute
+  DashboardProjectProjectSlugWebAnalyticsRoute: typeof DashboardProjectProjectSlugWebAnalyticsRoute
+  DashboardProjectProjectSlugIndexRoute: typeof DashboardProjectProjectSlugIndexRoute
+}
+
+const DashboardProjectProjectSlugRouteChildren: DashboardProjectProjectSlugRouteChildren =
+  {
+    DashboardProjectProjectSlugActivityRoute:
+      DashboardProjectProjectSlugActivityRoute,
+    DashboardProjectProjectSlugAiObservabilityRoute:
+      DashboardProjectProjectSlugAiObservabilityRoute,
+    DashboardProjectProjectSlugFeatureFlagsRoute:
+      DashboardProjectProjectSlugFeatureFlagsRoute,
+    DashboardProjectProjectSlugPeopleRoute:
+      DashboardProjectProjectSlugPeopleRoute,
+    DashboardProjectProjectSlugReplayVisionRoute:
+      DashboardProjectProjectSlugReplayVisionRoute,
+    DashboardProjectProjectSlugSettingsRoute:
+      DashboardProjectProjectSlugSettingsRoute,
+    DashboardProjectProjectSlugWebAnalyticsRoute:
+      DashboardProjectProjectSlugWebAnalyticsRoute,
+    DashboardProjectProjectSlugIndexRoute:
+      DashboardProjectProjectSlugIndexRoute,
+  }
+
+const DashboardProjectProjectSlugRouteWithChildren =
+  DashboardProjectProjectSlugRoute._addFileChildren(
+    DashboardProjectProjectSlugRouteChildren,
+  )
+
+interface DashboardRouteChildren {
+  DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardProjectProjectSlugRoute: typeof DashboardProjectProjectSlugRouteWithChildren
+  DashboardProjectsIndexRoute: typeof DashboardProjectsIndexRoute
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardIndexRoute: DashboardIndexRoute,
+  DashboardProjectProjectSlugRoute:
+    DashboardProjectProjectSlugRouteWithChildren,
+  DashboardProjectsIndexRoute: DashboardProjectsIndexRoute,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
-  OnboardingRoute: OnboardingRoute,
+  DashboardRoute: DashboardRouteWithChildren,
   ApiHealthRoute: ApiHealthRoute,
+  InviteTokenRoute: InviteTokenRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

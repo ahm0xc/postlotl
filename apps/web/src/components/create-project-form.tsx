@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 import { Banner, BannerDescription, BannerTitle } from "@/components/ui/banner";
-import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
@@ -41,18 +40,5 @@ export function CreateProjectFields({ error }: { error: string | null }) {
         </Banner>
       )}
     </>
-  );
-}
-
-export function CreateProjectForm({ onCreate }: { onCreate: (name: string) => Promise<void> }) {
-  const { error, pending, onSubmit } = useCreateProjectSubmit(onCreate);
-
-  return (
-    <form className="grid gap-4" onSubmit={onSubmit}>
-      <CreateProjectFields error={error} />
-      <Button type="submit" className="w-full" loading={pending}>
-        Create project
-      </Button>
-    </form>
   );
 }

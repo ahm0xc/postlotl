@@ -28,7 +28,7 @@ export function CreateProjectDialog({
         <form onSubmit={onSubmit}>
           <DialogHeader>
             <DialogTitle>Create new project</DialogTitle>
-            <DialogDescription>Projects group the work of your organization.</DialogDescription>
+            <DialogDescription>Projects are where your team works together.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <CreateProjectFields error={error} />
