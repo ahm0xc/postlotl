@@ -5,5 +5,5 @@ export const Route = createFileRoute("/_dashboard/project/$projectSlug/web-analy
 });
 
 function WebAnalyticsPage() {
-  return <h1 className="text-2xl font-semibold">Web analytics</h1>;
+  return null;
 }

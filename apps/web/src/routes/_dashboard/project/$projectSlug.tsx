@@ -2,6 +2,7 @@ import { createFileRoute, notFound, Outlet } from "@tanstack/react-router";
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "~/components/app-sidebar";
+import { PageHeader } from "~/components/page-header";
 import { setActiveProject } from "~/server/projects";
 
 export const Route = createFileRoute("/_dashboard/project/$projectSlug")({
@@ -19,9 +20,10 @@ function ProjectLayout() {
     <SidebarProvider shortcut={null} persist={false}>
       <AppSidebar />
       <SidebarInset>
-        <main className="p-6">
+        <PageHeader />
+        <div className="p-6">
           <Outlet />
-        </main>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

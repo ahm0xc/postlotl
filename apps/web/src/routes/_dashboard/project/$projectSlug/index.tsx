@@ -5,7 +5,5 @@ export const Route = createFileRoute("/_dashboard/project/$projectSlug/")({
 });
 
 function ProjectPage() {
-  const { projectSlug } = Route.useParams();
-
-  return <h1 className="text-2xl font-semibold">{projectSlug}</h1>;
+  return null;
 }

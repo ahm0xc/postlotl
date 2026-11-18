@@ -38,6 +38,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import type { IconComponent } from "@/lib/icon-context";
 import { authClient } from "~/lib/auth-client";
@@ -87,6 +88,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const matchRoute = useMatchRoute();
   const { projectSlug } = useParams({ from: "/_dashboard/project/$projectSlug" });
+  const { setOpenMobile } = useSidebar();
   const [createOpen, setCreateOpen] = useState(false);
 
   const { data: projects = [] } = useQuery({
@@ -96,7 +98,12 @@ export function AppSidebar() {
 
   const currentProject = projects.find((project) => project.slug === projectSlug) ?? projects[0];
 
+  function closeMobileSidebar() {
+    setOpenMobile(false);
+  }
+
   function openProject(slug: string) {
+    closeMobileSidebar();
     return navigate({ to: "/project/$projectSlug", params: { projectSlug: slug } });
   }
 
@@ -108,6 +115,7 @@ export function AppSidebar() {
   }
 
   async function handleSignOut() {
+    closeMobileSidebar();
     await authClient.signOut();
     await navigate({ to: "/sign-in" });
   }
@@ -115,118 +123,128 @@ export function AppSidebar() {
   const user = session?.user;
 
   return (
-    <Sidebar collapsible="none">
-      <SidebarHeader>
-        <div className="flex items-center gap-1 p-1">
-          <DropdownMenu>
-            <DropdownTrigger
-              render={
-                <Button
-                  className="min-w-0 flex-1 justify-start"
-                  variant="ghost"
-                  leadingIcon={cubeIcon}
-                >
-                  {currentProject?.name ?? "No project"}
-                </Button>
-              }
-            />
-            <DropdownContent align="start" sideOffset={6}>
-              <DropdownLabel>Projects</DropdownLabel>
-              {projects.map((project, index) => (
-                <MenuItem
-                  key={project.id}
-                  checked={project.slug === currentProject?.slug}
-                  icon={project.slug === currentProject?.slug ? checkIcon : undefined}
-                  index={index}
-                  label={project.name}
-                  onSelect={() => openProject(project.slug)}
-                />
-              ))}
-              <DropdownSeparator />
-              <MenuItem
-                icon={plusIcon}
-                index={projects.length}
-                label="Create new project"
-                onSelect={() => setCreateOpen(true)}
-              />
-              <MenuItem
-                icon={projectsIcon}
-                index={projects.length + 1}
-                label="All projects"
-                onSelect={() => void navigate({ to: "/projects" })}
-              />
-            </DropdownContent>
-          </DropdownMenu>
-          <ThemeToggle />
-        </div>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Project</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navigationItems.map((item) => (
-                <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton
-                    icon={item.icon}
-                    isActive={
-                      matchRoute({ to: item.to, params: { projectSlug }, fuzzy: false }) !== false
-                    }
-                    render={<Link params={{ projectSlug }} to={item.to} />}
+    <>
+      <Sidebar rail={false}>
+        <SidebarHeader>
+          <div className="flex items-center gap-1 p-1">
+            <DropdownMenu>
+              <DropdownTrigger
+                render={
+                  <Button
+                    className="min-w-0 flex-1 justify-start"
+                    variant="ghost"
+                    leadingIcon={cubeIcon}
                   >
-                    {item.label}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              icon={settingsIcon}
-              isActive={
-                matchRoute({
-                  to: "/project/$projectSlug/settings",
-                  params: { projectSlug },
-                  fuzzy: false,
-                }) !== false
-              }
-              render={<Link params={{ projectSlug }} to="/project/$projectSlug/settings" />}
-            >
-              Settings
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-        {user && (
-          <DropdownMenu>
-            <DropdownTrigger
-              render={
-                <Button className="w-full justify-start" variant="ghost" leadingIcon={cubeIcon}>
-                  {user.name || user.email}
-                </Button>
-              }
-            />
-            <DropdownContent align="start" side="top" sideOffset={6}>
-              <DropdownLabel>{user.email}</DropdownLabel>
-              <DropdownSeparator />
-              <MenuItem
-                icon={signOutIcon}
-                index={0}
-                label="Sign out"
-                onSelect={() => void handleSignOut()}
+                    {currentProject?.name ?? "No project"}
+                  </Button>
+                }
               />
-            </DropdownContent>
-          </DropdownMenu>
-        )}
-      </SidebarFooter>
+              <DropdownContent align="start" sideOffset={6}>
+                <DropdownLabel>Projects</DropdownLabel>
+                {projects.map((project, index) => (
+                  <MenuItem
+                    key={project.id}
+                    checked={project.slug === currentProject?.slug}
+                    icon={project.slug === currentProject?.slug ? checkIcon : undefined}
+                    index={index}
+                    label={project.name}
+                    onSelect={() => openProject(project.slug)}
+                  />
+                ))}
+                <DropdownSeparator />
+                <MenuItem
+                  icon={plusIcon}
+                  index={projects.length}
+                  label="Create new project"
+                  onSelect={() => {
+                    closeMobileSidebar();
+                    setCreateOpen(true);
+                  }}
+                />
+                <MenuItem
+                  icon={projectsIcon}
+                  index={projects.length + 1}
+                  label="All projects"
+                  onSelect={() => {
+                    closeMobileSidebar();
+                    void navigate({ to: "/projects" });
+                  }}
+                />
+              </DropdownContent>
+            </DropdownMenu>
+            <ThemeToggle />
+          </div>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Project</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {navigationItems.map((item) => (
+                  <SidebarMenuItem key={item.label}>
+                    <SidebarMenuButton
+                      icon={item.icon}
+                      isActive={
+                        matchRoute({ to: item.to, params: { projectSlug }, fuzzy: false }) !== false
+                      }
+                      onClick={closeMobileSidebar}
+                      render={<Link params={{ projectSlug }} to={item.to} />}
+                    >
+                      {item.label}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                icon={settingsIcon}
+                isActive={
+                  matchRoute({
+                    to: "/project/$projectSlug/settings",
+                    params: { projectSlug },
+                    fuzzy: false,
+                  }) !== false
+                }
+                onClick={closeMobileSidebar}
+                render={<Link params={{ projectSlug }} to="/project/$projectSlug/settings" />}
+              >
+                Settings
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+          {user && (
+            <DropdownMenu>
+              <DropdownTrigger
+                render={
+                  <Button className="w-full justify-start" variant="ghost" leadingIcon={cubeIcon}>
+                    {user.name || user.email}
+                  </Button>
+                }
+              />
+              <DropdownContent align="start" side="top" sideOffset={6}>
+                <DropdownLabel>{user.email}</DropdownLabel>
+                <DropdownSeparator />
+                <MenuItem
+                  icon={signOutIcon}
+                  index={0}
+                  label="Sign out"
+                  onSelect={() => void handleSignOut()}
+                />
+              </DropdownContent>
+            </DropdownMenu>
+          )}
+        </SidebarFooter>
+      </Sidebar>
       <CreateProjectDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
         onCreate={handleCreateProject}
       />
-    </Sidebar>
+    </>
   );
 }

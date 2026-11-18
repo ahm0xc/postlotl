@@ -5,5 +5,5 @@ export const Route = createFileRoute("/_dashboard/project/$projectSlug/people")(
 });
 
 function PeoplePage() {
-  return <h1 className="text-2xl font-semibold">People</h1>;
+  return null;
 }

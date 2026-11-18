@@ -5,5 +5,5 @@ export const Route = createFileRoute("/_dashboard/project/$projectSlug/replay-vi
 });
 
 function ReplayVisionPage() {
-  return <h1 className="text-2xl font-semibold">Replay vision</h1>;
+  return null;
 }

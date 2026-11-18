@@ -5,5 +5,5 @@ export const Route = createFileRoute("/_dashboard/project/$projectSlug/activity"
 });
 
 function ActivityPage() {
-  return <h1 className="text-2xl font-semibold">Activity</h1>;
+  return null;
 }
