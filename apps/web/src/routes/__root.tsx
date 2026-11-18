@@ -4,6 +4,7 @@ import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanst
 
 import { Providers } from "../components/providers";
 import TanstackQueryProvider from "../components/query-provider";
+import { ThemeProvider, themeInitScript } from "../lib/theme";
 
 import appCss from "../styles.css?url";
 
@@ -41,9 +42,11 @@ function RootComponent() {
 
   return (
     <TanstackQueryProvider queryClient={queryClient}>
-      <Providers>
-        <Outlet />
-      </Providers>
+      <ThemeProvider>
+        <Providers>
+          <Outlet />
+        </Providers>
+      </ThemeProvider>
     </TanstackQueryProvider>
   );
 }
@@ -53,6 +56,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body>
         {children}

@@ -44,6 +44,7 @@ import { authClient } from "~/lib/auth-client";
 import { createProject, listMyProjects } from "~/server/projects";
 
 import { CreateProjectDialog } from "./create-project-dialog";
+import { ThemeToggle } from "./theme-toggle";
 
 type PhosphorGlyph = ComponentType<{
   size?: number;
@@ -116,11 +117,15 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="none">
       <SidebarHeader>
-        <div className="grid gap-1 p-1">
+        <div className="flex items-center gap-1 p-1">
           <DropdownMenu>
             <DropdownTrigger
               render={
-                <Button className="w-full justify-start" variant="ghost" leadingIcon={cubeIcon}>
+                <Button
+                  className="min-w-0 flex-1 justify-start"
+                  variant="ghost"
+                  leadingIcon={cubeIcon}
+                >
                   {currentProject?.name ?? "No project"}
                 </Button>
               }
@@ -152,6 +157,7 @@ export function AppSidebar() {
               />
             </DropdownContent>
           </DropdownMenu>
+          <ThemeToggle />
         </div>
       </SidebarHeader>
       <SidebarContent>
