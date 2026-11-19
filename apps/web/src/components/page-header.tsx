@@ -21,7 +21,7 @@ export function PageHeader() {
   const title = pageTitles[segment] ?? "";
 
   return (
-    <header className="z-sticky border-border bg-background/80 sticky top-0 flex h-14 shrink-0 items-center gap-3 border-b px-4 backdrop-blur">
+    <header className="z-sticky bg-background/80 sticky top-0 flex h-14 shrink-0 items-center gap-3 px-4 backdrop-blur">
       <SidebarTrigger className="md:hidden" />
       <h1 className="text-subtitle truncate">{title}</h1>
     </header>
