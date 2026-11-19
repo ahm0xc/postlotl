@@ -1,0 +1,21 @@
+{
+  "name": "@postlotl/tracker",
+  "version": "0.0.0",
+  "private": true,
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --minify --format=iife --target=es2020 --legal-comments=none --outfile=dist/script.js",
+    "check-types": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "jsdom": "^31.0.1",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}
